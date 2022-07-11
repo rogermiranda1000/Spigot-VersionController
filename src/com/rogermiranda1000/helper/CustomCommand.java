@@ -139,7 +139,8 @@ public class CustomCommand {
      * @param partialUsage  Command
      * @param index         Position of splittedCmd and partialUsage that we're checking
      */
-    protected void searchSpecialText(Collection<String> results, String[] splittedCmd, String[] partialUsage, int index) { }
+    public void searchSpecialText(Collection<String> results, String[] splittedCmd, String[] partialUsage, int index) {
+    }
 
     protected static boolean partiallyMatches(String s1, String s2) {
         if (s1.length() >= s2.length()) return false; // you have written more than the actual command
