@@ -65,7 +65,7 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor 
         PluginManager pm = getServer().getPluginManager();
         for (Listener lis : this.listeners) pm.registerEvents(lis, this);
 
-        if (VersionController.version.compareTo(Version.MC_1_10) >= 0) {
+        if (this.commands.length > 0 && VersionController.version.compareTo(Version.MC_1_10) >= 0) {
             // if MC > 10 we can send hints onTab
             String commandBase = this.getName().toLowerCase();
             getCommand(commandBase).setTabCompleter(new HintEvent(this));
