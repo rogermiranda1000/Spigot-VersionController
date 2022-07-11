@@ -14,10 +14,13 @@ import java.lang.reflect.Method;
 
 public class SpigotEventOverrider {
     /**
+     *
+     /**
      * Finds the desired listener and remove it and returns it
      * @param plugin Plugin registering the listener
      * @param match Class registering the listener
      * @param event Event class to override
+     * @param <T>   Event type
      * @return Event to launch
      * @throws ListenerNotFoundException Not found
      */
