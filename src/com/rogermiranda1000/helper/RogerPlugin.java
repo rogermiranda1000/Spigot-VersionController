@@ -1,6 +1,7 @@
 package com.rogermiranda1000.helper;
 
 import com.rogermiranda1000.versioncontroller.Version;
+import com.rogermiranda1000.versioncontroller.VersionChecker;
 import com.rogermiranda1000.versioncontroller.VersionController;
 import net.md_5.bungee.api.ChatColor;
 import org.bukkit.Bukkit;
@@ -12,6 +13,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
+
+import java.io.IOException;
 
 public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor {
     public final String clearPrefix = ChatColor.GOLD.toString() + ChatColor.BOLD + "[" + this.getName() + "] " + ChatColor.GREEN,
@@ -43,9 +46,20 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor 
         return this.commands;
     }
 
+    abstract public String getPluginID();
+
     @Override
     public void onEnable() {
         // TODO any way to save the instance here?
+
+        Bukkit.getScheduler().runTaskAsynchronously(this,()->{
+            try {
+                String version = VersionChecker.getVersion(this.getPluginID());
+                if (VersionChecker.isLower(this.getDescription().getVersion(), version)) this.printConsoleWarningMessage("v" + version + " is now available! You should consider updating the plugin.");
+            } catch (IOException e) {
+                this.printConsoleWarningMessage("Can't check for updates.");
+            }
+        });
 
         // register the events
         PluginManager pm = getServer().getPluginManager();
