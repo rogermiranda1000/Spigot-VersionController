@@ -34,6 +34,10 @@ public abstract class CachedCustomBlock<T> extends CustomBlock<T> {
         this.cache = new HashMap<>();
     }
 
+    public Set<T> getAllValues() {
+        return this.cache.keySet();
+    }
+
     @Override
     public void load() {
         super.load();
