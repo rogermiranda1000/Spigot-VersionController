@@ -111,6 +111,14 @@ public class ProtectionOverrider {
     /**
      * @pre at least one object must call instantiate
      */
+    public static void deinstantiate(Object overrider) {
+        ProtectionOverrider.instance.overriders.remove(overrider);
+    }
+
+    /**
+     * If the overridden events should occur
+     * @pre at least one object must call instantiate
+     */
     public static void shouldOccurs(Object overrider) {
         ProtectionOverrider.instance.allowQueue.remove(overrider);
     }

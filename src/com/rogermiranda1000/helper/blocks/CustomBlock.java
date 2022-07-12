@@ -75,7 +75,6 @@ public abstract class CustomBlock<T> implements Listener {
         this.storeFunctions = storeFunctions;
 
         this.overrideProtections = overrideProtections;
-        if (overrideProtections) ProtectionOverrider.instantiate(plugin, this);
     }
 
     /**
@@ -90,10 +89,12 @@ public abstract class CustomBlock<T> implements Listener {
 
     public void register() {
         Bukkit.getPluginManager().registerEvents(this, this.plugin);
+        if (overrideProtections) ProtectionOverrider.instantiate(plugin, this);
     }
 
     public void unregister() {
         HandlerList.unregisterAll(this);
+        if (overrideProtections) ProtectionOverrider.deinstantiate(this);
     }
 
     public boolean willSave() {
@@ -270,7 +271,7 @@ public abstract class CustomBlock<T> implements Listener {
     /**
      * /!\\ Called BEFORE the object is removed from the list /!\\
      * It won't be called if removeBlockArtificially
-     * @return if overrideProtections, if the protection should be overridden
+     * @return if overrideProtections, if the protection should be overridden (if not it's ignored)
      */
     abstract public boolean onCustomBlockBreak(BlockBreakEvent e, T element);
 }
