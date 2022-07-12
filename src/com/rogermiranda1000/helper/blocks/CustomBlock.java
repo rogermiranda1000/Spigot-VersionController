@@ -173,6 +173,19 @@ public abstract class CustomBlock<T> implements Listener {
     }
 
     /**
+     * Get all the locations by value.
+     * O(n); not recommended using
+     * Note: T must have implemented a valid 'equals' function
+     * @param val           Value
+     * @param blockConsumer Function to call for each value found
+     */
+    synchronized public void getAllBlocksByValue(@NotNull final T val, final Consumer<CustomBlocksEntry<T>> blockConsumer) {
+        this.getAllBlocks((e) -> {
+            if (val.equals(e.getKey())) blockConsumer.accept(e);
+        });
+    }
+
+    /**
      * Get the custom block (if any) in the location loc
      * @param loc   Location to search the block
      * @return      Custom block; null if none
