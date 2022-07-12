@@ -26,7 +26,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
 
@@ -141,9 +140,7 @@ public abstract class CustomBlock<T> implements Listener {
 
         this.onCustomBlockBreak(e, rem);
         if (e.isCancelled()) return;
-        synchronized (this) {
-            this.blocks = this.blocks.delete(rem, CustomBlock.getPoint(b.getLocation()));
-        }
+        this.removeBlockArtificially(b.getLocation(), rem);
     }
 
     // TODO onUse, onStep
@@ -198,14 +195,17 @@ public abstract class CustomBlock<T> implements Listener {
         return results.next().value();
     }
 
-    public boolean removeBlockArtificially(Location loc) {
-        T rem = this.getBlock(loc);
-        if (rem == null) return false;
-
+    protected void removeBlockArtificially(Location loc, @NotNull T rem) {
         Point pos = CustomBlock.getPoint(loc);
         synchronized (this) {
             this.blocks = this.blocks.delete(rem, pos);
         }
+    }
+
+    public boolean removeBlockArtificially(Location loc) {
+        T rem = this.getBlock(loc);
+        if (rem == null) return false;
+        this.removeBlockArtificially(loc, rem);
         return true;
     }
 
