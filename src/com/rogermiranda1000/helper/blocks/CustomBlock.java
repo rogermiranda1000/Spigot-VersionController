@@ -143,15 +143,9 @@ public abstract class CustomBlock<T> implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onBlockBreak(BlockBreakEvent e) {
-        if (!this.isTheSameCustomBlock.isSameCustomBlock(e)) {
-            if (this.overrideProtections) ProtectionOverrider.shouldOccurs(this);
-            return;
-        }
-
         Block b = e.getBlock();
-        T rem = this.getBlock(b.getLocation());
-        if (rem == null) {
-            this.plugin.printConsoleWarningMessage("Expecting element at position " + b.getLocation().toString() + ", but instead 'null' found");
+        T rem;
+        if (!this.isTheSameCustomBlock.isSameCustomBlock(e) || (rem = this.getBlock(b.getLocation())) == null) {
             if (this.overrideProtections) ProtectionOverrider.shouldOccurs(this);
             return;
         }
