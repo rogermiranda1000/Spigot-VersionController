@@ -34,14 +34,6 @@ import java.util.function.Function;
  * @param <T> The block information to save
  */
 public abstract class CustomBlock<T> implements Listener {
-    private static final String FILE_NAME = "CustomBlocks.yml";
-
-    private final Gson gson;
-    private final RogerPlugin plugin;
-    private RTree<T, Point> blocks;
-    private final Function<Block, Boolean> isTheSameCustomBlock;
-    @Nullable private final StoreConversion<T> storeFunctions;
-
     private static Point getPoint(Location loc) {
         if (loc.getWorld() == null) return Point.create(0,0,loc.getX(), loc.getY(), loc.getZ());
 
@@ -61,9 +53,17 @@ public abstract class CustomBlock<T> implements Listener {
         return new Location(Bukkit.getWorld(world), values[2], values[3], values[4]);
     }
 
-    public CustomBlock(RogerPlugin plugin, Function<Block, Boolean> isTheSameCustomBlock, @Nullable StoreConversion<T> storeFunctions) {
+    private final Gson gson;
+    private final RogerPlugin plugin;
+    private final String id;
+    private RTree<T, Point> blocks;
+    private final Function<Block, Boolean> isTheSameCustomBlock;
+    @Nullable private final StoreConversion<T> storeFunctions;
+
+    public CustomBlock(RogerPlugin plugin, String id, Function<Block, Boolean> isTheSameCustomBlock, @Nullable StoreConversion<T> storeFunctions) {
         this.gson = new GsonBuilder().setPrettyPrinting().create();
         this.plugin = plugin;
+        this.id = id;
         this.isTheSameCustomBlock = isTheSameCustomBlock;
         this.storeFunctions = storeFunctions;
     }
@@ -72,8 +72,8 @@ public abstract class CustomBlock<T> implements Listener {
         return this.storeFunctions != null;
     }
 
-    public CustomBlock(RogerPlugin plugin, @NotNull final BlockType block, @Nullable StoreConversion<T> storeFunctions) {
-        this(plugin, (b)->block.equals(VersionController.get().getObject(b)), storeFunctions);
+    public CustomBlock(RogerPlugin plugin, String id, @NotNull final BlockType block, @Nullable StoreConversion<T> storeFunctions) {
+        this(plugin, id, (b)->block.equals(VersionController.get().getObject(b)), storeFunctions);
     }
 
     public void load() {
@@ -95,7 +95,7 @@ public abstract class CustomBlock<T> implements Listener {
         }
 
         // write
-        File file = new File(this.plugin.getDataFolder(), CustomBlock.FILE_NAME);
+        File file = new File(this.plugin.getDataFolder(), this.id + ".json");
         FileWriter fw = new FileWriter(file);
         this.gson.toJson(basicBlocks, fw);
         fw.close();
