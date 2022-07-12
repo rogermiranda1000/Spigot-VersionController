@@ -46,11 +46,18 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor 
     /**
      * Called to add a new custom block
      * @return Method concatenation
-     * @throws ClassNotFoundException Gson not found
      */
     // TODO on stop remove all?
-    public RogerPlugin addCustomBlock(CustomBlock<?> cb) throws ClassNotFoundException {
-        if (cb.willSave()) Class.forName("com.google.gson.JsonSyntaxException");
+    public RogerPlugin addCustomBlock(CustomBlock<?> cb) {
+        if (cb.willSave()) {
+            try {
+                Class.forName("com.google.gson.JsonSyntaxException");
+            } catch (ClassNotFoundException ex) {
+                this.printConsoleErrorMessage( this.getName() + " needs Gson in order to work.");
+                return this;
+            }
+        }
+
         this.customBlocks.add(cb);
 
         if (this.isRunning) {
