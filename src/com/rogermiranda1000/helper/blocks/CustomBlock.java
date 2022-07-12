@@ -26,9 +26,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 /**
  * A block with special meaning
@@ -168,8 +168,8 @@ public abstract class CustomBlock<T> implements Listener {
      * Get all the placed blocks of this type
      * @param blockConsumer Function to execute for each block
      */
-    synchronized public void getAllBlocks(final Consumer<T> blockConsumer) {
-        this.blocks.entries().forEach(e -> blockConsumer.accept(e.value()));
+    synchronized public void getAllBlocks(final Consumer<CustomBlocksEntry<T>> blockConsumer) {
+        this.blocks.entries().forEach(e -> blockConsumer.accept(new CustomBlocksEntry<>(e.value(), CustomBlock.getLocation(e.geometry()))));
     }
 
     /**
