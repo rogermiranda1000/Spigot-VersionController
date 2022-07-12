@@ -53,8 +53,10 @@ public abstract class CustomBlock<T> implements Listener {
     /**
      * Converts a point returned by getPoint into the original location
      */
-    private static Location getLocation(Point p) {
+    private static Location getLocation(Point p) throws IllegalArgumentException {
+        if (!(p instanceof PointDouble)) throw new IllegalArgumentException("Point must be instance of PointDouble!");
         double []values = ((PointDouble)p).mins();
+        if (values.length != 5) throw new IllegalArgumentException("Point must have 5 elements!");
         UUID world = new UUID(Double.doubleToRawLongBits(values[0]), Double.doubleToRawLongBits(values[1]));
         return new Location(Bukkit.getWorld(world), values[2], values[3], values[4]);
     }
@@ -102,6 +104,9 @@ public abstract class CustomBlock<T> implements Listener {
         fw.close();
     }
 
+    /**
+     * @pre storeFunctions != null
+     */
     private BasicBlock getBasicBlock(Entry<T,Point> e) {
         return new BasicBlock(CustomBlock.getLocation(e.geometry()),
                 this.storeFunctions.storeName().apply(e.value()));
