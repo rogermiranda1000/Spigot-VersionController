@@ -60,31 +60,32 @@ public abstract class CustomBlock<T> implements Listener {
     protected RTree<T, Point> blocks;
     private final CustomBlockComparer isTheSameCustomBlock;
     @Nullable private final StoreConversion<T> storeFunctions;
-    private boolean overrideProtections;
+    private final boolean overrideProtections, onEventSuceedRemove;
 
     /**
      * @param id File save name
      * @param overrideProtections Launch ProtectionOverrider
      *                            /!\\ Must be called from a plugin with dependencies/soft-dependencies of WorldGuard and Residence /!\\
+     * @param onEventSuceedRemove After a successful event (not canceled) remove the block from the list
      */
-    public CustomBlock(RogerPlugin plugin, String id, CustomBlockComparer isTheSameCustomBlock, boolean overrideProtections, @Nullable StoreConversion<T> storeFunctions) {
+    public CustomBlock(RogerPlugin plugin, String id, CustomBlockComparer isTheSameCustomBlock, boolean overrideProtections, boolean onEventSuceedRemove, @Nullable StoreConversion<T> storeFunctions) {
         this.gson = new GsonBuilder().setPrettyPrinting().create();
         this.plugin = plugin;
         this.id = id;
         this.isTheSameCustomBlock = isTheSameCustomBlock;
         this.storeFunctions = storeFunctions;
-
         this.overrideProtections = overrideProtections;
+        this.onEventSuceedRemove = onEventSuceedRemove;
     }
 
     /**
      * @param id File save name
      */
-    public CustomBlock(RogerPlugin plugin, String id, @NotNull final BlockType block, boolean overrideProtections, @Nullable StoreConversion<T> storeFunctions) {
+    public CustomBlock(RogerPlugin plugin, String id, @NotNull final BlockType block, boolean overrideProtections, boolean onEventSuceedRemove, @Nullable StoreConversion<T> storeFunctions) {
         this(plugin, id, (e)->{
             if (!(e instanceof BlockEvent)) return false;
             return block.equals(VersionController.get().getObject(((BlockEvent)e).getBlock()));
-        }, overrideProtections, storeFunctions);
+        }, overrideProtections, onEventSuceedRemove, storeFunctions);
     }
 
     public void register() {
@@ -152,8 +153,7 @@ public abstract class CustomBlock<T> implements Listener {
 
         boolean shouldOverride = this.onCustomBlockBreak(e, rem);
         if (!shouldOverride && this.overrideProtections) ProtectionOverrider.shouldOccurs(this);
-        if (e.isCancelled()) return;
-        this.removeBlockArtificially(b.getLocation(), rem);
+        if (!e.isCancelled() && this.onEventSuceedRemove) this.removeBlockArtificially(b.getLocation(), rem);
     }
 
     // TODO onUse, onStep
