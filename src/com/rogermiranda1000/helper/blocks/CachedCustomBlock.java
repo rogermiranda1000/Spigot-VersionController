@@ -38,6 +38,10 @@ public abstract class CachedCustomBlock<T> extends CustomBlock<T> {
         return this.cache.keySet();
     }
 
+    public int getDifferentValuesNum() {
+        return this.cache.size();
+    }
+
     @Override
     public void load() {
         super.load();
