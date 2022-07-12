@@ -34,7 +34,7 @@ import java.util.function.Consumer;
  * @param <T> The block information to save
  */
 public abstract class CustomBlock<T> implements Listener {
-    private static Point getPoint(Location loc) {
+    protected static Point getPoint(Location loc) {
         if (loc.getWorld() == null) return Point.create(0,0,loc.getX(), loc.getY(), loc.getZ());
 
         return Point.create(Double.longBitsToDouble(loc.getWorld().getUID().getMostSignificantBits()),
@@ -45,7 +45,7 @@ public abstract class CustomBlock<T> implements Listener {
     /**
      * Converts a point returned by getPoint into the original location
      */
-    private static Location getLocation(Point p) throws IllegalArgumentException {
+    protected static Location getLocation(Point p) throws IllegalArgumentException {
         if (!(p instanceof PointDouble)) throw new IllegalArgumentException("Point must be instance of PointDouble!");
         double []values = ((PointDouble)p).mins();
         if (values.length != 5) throw new IllegalArgumentException("Point must have 5 elements!");
@@ -56,7 +56,7 @@ public abstract class CustomBlock<T> implements Listener {
     private final Gson gson;
     private final RogerPlugin plugin;
     private final String id;
-    private RTree<T, Point> blocks;
+    protected RTree<T, Point> blocks;
     private final CustomBlockComparer isTheSameCustomBlock;
     @Nullable private final StoreConversion<T> storeFunctions;
 
@@ -86,9 +86,7 @@ public abstract class CustomBlock<T> implements Listener {
     }
 
     public void load() {
-        synchronized (this) {
-            this.blocks = RTree.star().dimensions(5).create(); // MSB[world], LSB[world], x, y, z
-        }
+        this.removeAllBlocksArtificially();
         if (!this.willSave()) return;
 
         // TODO load
@@ -202,24 +200,43 @@ public abstract class CustomBlock<T> implements Listener {
         }
     }
 
-    public boolean removeBlockArtificially(Location loc) {
+    @Nullable
+    public T removeBlockArtificially(Location loc) {
         T rem = this.getBlock(loc);
-        if (rem == null) return false;
+        if (rem == null) return null;
         this.removeBlockArtificially(loc, rem);
-        return true;
+        return rem;
     }
 
     /**
      * Remove from the list all the occurrences of val
      * Note: T must have implemented a valid 'equals' function
-     * @param val Object to remove
+     * @param val           Object to remove
+     * @param blockConsumer Get the removed objects (null if not desired)
      */
-    synchronized public void removeBlocksArtificiallyByValue(@NotNull final T val) {
+    synchronized public void removeBlocksArtificiallyByValue(@NotNull final T val, @Nullable final Consumer<CustomBlocksEntry<T>> blockConsumer) {
+        // /!\\ FOR OPTIMIZATION REASON, THIS CODE IS DUPLICATED IN CachedCustomBlock; CHANGE THAT CODE TOO /!\\
         ArrayList<Entry<T,Point>> rem = new ArrayList<>();
         this.blocks.entries().forEach(e -> {
-            if (val.equals(e.value())) rem.add(new EntryDefault<>(e.value(), e.geometry()));
+            if (val.equals(e.value())) {
+                rem.add(new EntryDefault<>(e.value(), e.geometry()));
+                if (blockConsumer != null) blockConsumer.accept(new CustomBlocksEntry<>(e.value(), CustomBlock.getLocation(e.geometry())));
+            }
         });
         for (Entry<T, Point> r : rem) this.blocks = this.blocks.delete(r);
+    }
+
+    synchronized public void removeAllBlocksArtificially() {
+        this.blocks = RTree.star().dimensions(5).create(); // MSB[world], LSB[world], x, y, z
+    }
+
+    /**
+     * Remove from the list all the occurrences of val
+     * Note: T must have implemented a valid 'equals' function
+     * @param val           Object to remove
+     */
+    public void removeBlocksArtificiallyByValue(@NotNull final T val) {
+        this.removeBlocksArtificiallyByValue(val, null);
     }
 
     /**

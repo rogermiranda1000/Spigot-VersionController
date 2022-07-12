@@ -96,10 +96,21 @@ public abstract class CachedCustomBlock<T> extends CustomBlock<T> {
     }
 
     @Override
-    synchronized public void removeBlocksArtificiallyByValue(@NotNull final T val) {
-        super.removeBlocksArtificiallyByValue(val);
+    synchronized public void removeBlocksArtificiallyByValue(@NotNull final T val, @Nullable final Consumer<CustomBlocksEntry<T>> blockConsumer) {
+        Set<Location> s = this.cache.get(val);
+        if (s == null) return;
+        for (Location loc : s) {
+            this.blocks = this.blocks.delete(val, CustomBlock.getPoint(loc));
+            if (blockConsumer != null) blockConsumer.accept(new CustomBlocksEntry<>(val, loc));
+        }
+        this.cache.remove(val);
+    }
+
+    @Override
+    public void removeAllBlocksArtificially() {
+        super.removeAllBlocksArtificially();
         synchronized (this) {
-            this.cache.remove(val);
+            this.cache.clear();
         }
     }
 }
