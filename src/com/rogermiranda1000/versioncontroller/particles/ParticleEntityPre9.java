@@ -37,14 +37,14 @@ public class ParticleEntityPre9 extends ParticleEntity {
         }
     }
 
-    private Effect particle;
+    private final Effect particle;
 
     public ParticleEntityPre9(Effect particle) {
         this.particle = particle;
     }
 
     @Override
-    void playParticle(World world, Location loc) {
+    public void playParticle(World world, Location loc) {
         try {
             ParticleEntityPre9.playWorldEffectMethod.invoke(world.spigot(), loc, this.particle, 0, 0, 0.f, 0.f, 0.f, 0.f, 1, ParticleEntityPre9.RADIUS);
         } catch (IllegalAccessException | NullPointerException | InvocationTargetException e) {
@@ -53,7 +53,7 @@ public class ParticleEntityPre9 extends ParticleEntity {
     }
 
     @Override
-    void playParticle(Player ply, Location loc) {
+    public void playParticle(Player ply, Location loc) {
         try {
             ParticleEntityPre9.playPlayerEffectMethod.invoke(ply.spigot(), loc, this.particle, 0, 0, 0.f, 0.f, 0.f, 0.f, 1, ParticleEntityPre9.RADIUS);
         } catch (IllegalAccessException | NullPointerException | InvocationTargetException e) {
