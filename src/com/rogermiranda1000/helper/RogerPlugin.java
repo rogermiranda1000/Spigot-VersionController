@@ -8,6 +8,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.craftbukkit.libs.jline.internal.Nullable;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.PluginManager;
@@ -46,6 +47,11 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor 
         return this.commands;
     }
 
+    /**
+     * Get the spigot ID to check for updates
+     * @return Spigot ID, or NULL if don't want to check updates
+     */
+    @Nullable
     abstract public String getPluginID();
 
     @Override
@@ -54,8 +60,11 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor 
 
         Bukkit.getScheduler().runTaskAsynchronously(this,()->{
             try {
-                String version = VersionChecker.getVersion(this.getPluginID());
-                if (VersionChecker.isLower(this.getDescription().getVersion(), version)) this.printConsoleWarningMessage("v" + version + " is now available! You should consider updating the plugin.");
+                String id = this.getPluginID();
+                if (id != null) {
+                    String version = VersionChecker.getVersion(id);
+                    if (VersionChecker.isLower(this.getDescription().getVersion(), version)) this.printConsoleWarningMessage("v" + version + " is now available! You should consider updating the plugin.");
+                }
             } catch (IOException e) {
                 this.printConsoleWarningMessage("Can't check for updates.");
             }
@@ -63,7 +72,7 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor 
 
         // register the events
         PluginManager pm = getServer().getPluginManager();
-        for (Listener lis : this.listeners) pm.registerEvents(lis, this);
+        for (Listener lis : this.listeners) pm.registerEvents(lis, this); // TODO ignore some events depending on the version
 
         if (this.commands.length > 0 && VersionController.version.compareTo(Version.MC_1_10) >= 0) {
             // if MC > 10 we can send hints onTab
