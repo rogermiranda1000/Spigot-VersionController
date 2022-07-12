@@ -60,6 +60,9 @@ public abstract class CustomBlock<T> implements Listener {
     private final Function<Block, Boolean> isTheSameCustomBlock;
     @Nullable private final StoreConversion<T> storeFunctions;
 
+    /**
+     * @param id File save name
+     */
     public CustomBlock(RogerPlugin plugin, String id, Function<Block, Boolean> isTheSameCustomBlock, @Nullable StoreConversion<T> storeFunctions) {
         this.gson = new GsonBuilder().setPrettyPrinting().create();
         this.plugin = plugin;
@@ -68,12 +71,15 @@ public abstract class CustomBlock<T> implements Listener {
         this.storeFunctions = storeFunctions;
     }
 
-    public boolean willSave() {
-        return this.storeFunctions != null;
-    }
-
+    /**
+     * @param id File save name
+     */
     public CustomBlock(RogerPlugin plugin, String id, @NotNull final BlockType block, @Nullable StoreConversion<T> storeFunctions) {
         this(plugin, id, (b)->block.equals(VersionController.get().getObject(b)), storeFunctions);
+    }
+
+    public boolean willSave() {
+        return this.storeFunctions != null;
     }
 
     public void load() {
@@ -203,8 +209,9 @@ public abstract class CustomBlock<T> implements Listener {
     /**
      * /!\\ Called BEFORE the object is added to the list /!\\
      * It won't be called if placeBlockArtificially
-     * @return the object to add (can't be null)
+     * @return the object to add
      */
+    @NotNull
     abstract public T onCustomBlockPlace(BlockPlaceEvent e, CustomBlock<T> cb);
 
     /**
