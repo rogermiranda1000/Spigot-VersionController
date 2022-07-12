@@ -38,20 +38,22 @@ public class SpigotEventOverrider {
             EventHandler eventHandler = m.getAnnotation(EventHandler.class);
             if (eventHandler == null) continue;
             final Class<? extends Event> type = m.getParameterTypes()[0].asSubclass(Event.class);
-            if (!type.equals(event)) continue;
 
-            // register again the event, but with the desired priority
-            Bukkit.getPluginManager().registerEvent(type, lis, eventHandler.priority(), (l, e) -> {
-                try {
+            if (type.equals(event)) r = m;
+            else {
+                // register again the event, but with the desired priority
+                Bukkit.getPluginManager().registerEvent(type, lis, eventHandler.priority(), (l, e) -> {
                     try {
-                        m.invoke(l, type.cast(e));
-                    } catch (ClassCastException ignore) {}
-                } catch (SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
-                    System.err.println("Error while overriding " + plugin + " event (" + lis.getClass().getName() + "#" + m.getName() + ")");
-                    ex.printStackTrace();
-                    // TODO send error back to the plugin?
-                }
-            }, plugin, eventHandler.ignoreCancelled());
+                        try {
+                            m.invoke(l, type.cast(e));
+                        } catch (ClassCastException ignore) {}
+                    } catch (SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
+                        System.err.println("Error while overriding " + plugin + " event (" + lis.getClass().getName() + "#" + m.getName() + ")");
+                        ex.printStackTrace();
+                        // TODO send error back to the plugin?
+                    }
+                }, plugin, eventHandler.ignoreCancelled());
+            }
         }
 
         if (r == null) throw new ListenerNotFoundException();
