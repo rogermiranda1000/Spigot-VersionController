@@ -10,6 +10,7 @@ import com.rogermiranda1000.versioncontroller.entities.EntitySpigot;
 import com.rogermiranda1000.versioncontroller.items.ItemManager;
 import com.rogermiranda1000.versioncontroller.items.ItemPost9;
 import com.rogermiranda1000.versioncontroller.items.ItemPre9;
+import com.rogermiranda1000.versioncontroller.particles.ParticleEntity;
 import com.rogermiranda1000.versioncontroller.particles.ParticleManager;
 import com.rogermiranda1000.versioncontroller.particles.ParticlePost9;
 import com.rogermiranda1000.versioncontroller.particles.ParticlePre9;
@@ -112,17 +113,7 @@ public class VersionController extends ItemManager implements BlockManager, Part
     }
 
     @Override
-    public void playParticle(World world, Object particle, Location loc) {
-        VersionController.particleManager.playParticle(world, particle, loc);
-    }
-
-    @Override
-    public void playParticle(Player ply, Object particle, Location loc) {
-        VersionController.particleManager.playParticle(ply, particle, loc);
-    }
-
-    @Override
-    public Object getParticle(String particle) throws IllegalArgumentException {
+    public ParticleEntity getParticle(String particle) throws IllegalArgumentException {
         return VersionController.particleManager.getParticle(particle);
     }
 
