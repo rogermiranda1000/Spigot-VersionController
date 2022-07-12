@@ -59,14 +59,21 @@ public abstract class CustomBlock<T> implements Listener {
         return new Location(Bukkit.getWorld(world), values[2], values[3], values[4]);
     }
 
-    public CustomBlock(RogerPlugin plugin, Function<Block, Boolean> isTheSameCustomBlock, @Nullable StoreConversion<T> storeFunctions) {
+    /**
+     * @throws ClassNotFoundException Gson not found
+     */
+    public CustomBlock(RogerPlugin plugin, Function<Block, Boolean> isTheSameCustomBlock, @Nullable StoreConversion<T> storeFunctions) throws ClassNotFoundException {
         this.gson = new GsonBuilder().setPrettyPrinting().create();
         this.plugin = plugin;
         this.isTheSameCustomBlock = isTheSameCustomBlock;
         this.storeFunctions = storeFunctions;
+        if (this.storeFunctions != null) Class.forName("com.google.gson.JsonSyntaxException");
     }
 
-    public CustomBlock(RogerPlugin plugin, @NotNull final BlockType block, @Nullable StoreConversion<T> storeFunctions) {
+    /**
+     * @throws ClassNotFoundException Gson not found
+     */
+    public CustomBlock(RogerPlugin plugin, @NotNull final BlockType block, @Nullable StoreConversion<T> storeFunctions) throws ClassNotFoundException {
         this(plugin, (b)->block.equals(VersionController.get().getObject(b)), storeFunctions);
     }
 
