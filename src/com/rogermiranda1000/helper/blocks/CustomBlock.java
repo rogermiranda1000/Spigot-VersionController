@@ -61,21 +61,18 @@ public abstract class CustomBlock<T> implements Listener {
         return new Location(Bukkit.getWorld(world), values[2], values[3], values[4]);
     }
 
-    /**
-     * @throws ClassNotFoundException Gson not found
-     */
-    public CustomBlock(RogerPlugin plugin, Function<Block, Boolean> isTheSameCustomBlock, @Nullable StoreConversion<T> storeFunctions) throws ClassNotFoundException {
+    public CustomBlock(RogerPlugin plugin, Function<Block, Boolean> isTheSameCustomBlock, @Nullable StoreConversion<T> storeFunctions) {
         this.gson = new GsonBuilder().setPrettyPrinting().create();
         this.plugin = plugin;
         this.isTheSameCustomBlock = isTheSameCustomBlock;
         this.storeFunctions = storeFunctions;
-        if (this.storeFunctions != null) Class.forName("com.google.gson.JsonSyntaxException");
     }
 
-    /**
-     * @throws ClassNotFoundException Gson not found
-     */
-    public CustomBlock(RogerPlugin plugin, @NotNull final BlockType block, @Nullable StoreConversion<T> storeFunctions) throws ClassNotFoundException {
+    public boolean willSave() {
+        return this.storeFunctions != null;
+    }
+
+    public CustomBlock(RogerPlugin plugin, @NotNull final BlockType block, @Nullable StoreConversion<T> storeFunctions) {
         this(plugin, (b)->block.equals(VersionController.get().getObject(b)), storeFunctions);
     }
 
@@ -83,13 +80,13 @@ public abstract class CustomBlock<T> implements Listener {
         synchronized (this) {
             this.blocks = RTree.star().dimensions(5).create(); // MSB[world], LSB[world], x, y, z
         }
-        if (this.storeFunctions == null) return;
+        if (!this.willSave()) return;
 
         // TODO load
     }
 
     public void save() throws IOException {
-        if (this.storeFunctions == null) return;
+        if (!this.willSave()) return;
 
         // get the output
         final ArrayList<BasicBlock> basicBlocks = new ArrayList<>();
