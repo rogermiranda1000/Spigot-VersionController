@@ -62,7 +62,7 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor 
 
         if (this.isRunning) {
             cb.load();
-            Bukkit.getPluginManager().registerEvents(cb, this);
+            cb.register();
         }
 
         return this;
@@ -79,7 +79,7 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor 
             this.printConsoleErrorMessage("Error while disabling custom block"); // TODO get more info
             e.printStackTrace();
         }
-        HandlerList.unregisterAll(cb);
+        cb.unregister();
 
         this.customBlocks.remove(cb);
 
@@ -126,7 +126,7 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor 
         // register the events
         PluginManager pm = getServer().getPluginManager();
         for (Listener lis : this.listeners) pm.registerEvents(lis, this); // TODO ignore some events depending on the version
-        for (Listener lis : this.customBlocks) pm.registerEvents(lis, this);
+        for (CustomBlock<?> cb : this.customBlocks) cb.register();
 
         if (this.commands.length > 0 && VersionController.version.compareTo(Version.MC_1_10) >= 0) {
             // if MC > 10 we can send hints onTab

@@ -15,6 +15,7 @@ import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.craftbukkit.libs.jline.internal.Nullable;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockEvent;
@@ -59,26 +60,40 @@ public abstract class CustomBlock<T> implements Listener {
     protected RTree<T, Point> blocks;
     private final CustomBlockComparer isTheSameCustomBlock;
     @Nullable private final StoreConversion<T> storeFunctions;
+    private boolean overrideProtections;
 
     /**
      * @param id File save name
+     * @param overrideProtections Launch ProtectionOverrider
+     *                            /!\\ Must be called from a plugin with dependencies/soft-dependencies of WorldGuard and Residence /!\\
      */
-    public CustomBlock(RogerPlugin plugin, String id, CustomBlockComparer isTheSameCustomBlock, @Nullable StoreConversion<T> storeFunctions) {
+    public CustomBlock(RogerPlugin plugin, String id, CustomBlockComparer isTheSameCustomBlock, boolean overrideProtections, @Nullable StoreConversion<T> storeFunctions) {
         this.gson = new GsonBuilder().setPrettyPrinting().create();
         this.plugin = plugin;
         this.id = id;
         this.isTheSameCustomBlock = isTheSameCustomBlock;
         this.storeFunctions = storeFunctions;
+
+        this.overrideProtections = overrideProtections;
+        if (overrideProtections) ProtectionOverrider.instantiate(plugin, this);
     }
 
     /**
      * @param id File save name
      */
-    public CustomBlock(RogerPlugin plugin, String id, @NotNull final BlockType block, @Nullable StoreConversion<T> storeFunctions) {
+    public CustomBlock(RogerPlugin plugin, String id, @NotNull final BlockType block, boolean overrideProtections, @Nullable StoreConversion<T> storeFunctions) {
         this(plugin, id, (e)->{
             if (!(e instanceof BlockEvent)) return false;
             return block.equals(VersionController.get().getObject(((BlockEvent)e).getBlock()));
-        }, storeFunctions);
+        }, overrideProtections, storeFunctions);
+    }
+
+    public void register() {
+        Bukkit.getPluginManager().registerEvents(this, this.plugin);
+    }
+
+    public void unregister() {
+        HandlerList.unregisterAll(this);
     }
 
     public boolean willSave() {
@@ -127,16 +142,21 @@ public abstract class CustomBlock<T> implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onBlockBreak(BlockBreakEvent e) {
-        if (!this.isTheSameCustomBlock.isSameCustomBlock(e)) return;
+        if (!this.isTheSameCustomBlock.isSameCustomBlock(e)) {
+            if (this.overrideProtections) ProtectionOverrider.shouldOccurs(this);
+            return;
+        }
 
         Block b = e.getBlock();
         T rem = this.getBlock(b.getLocation());
         if (rem == null) {
             this.plugin.printConsoleWarningMessage("Expecting element at position " + b.getLocation().toString() + ", but instead 'null' found");
+            if (this.overrideProtections) ProtectionOverrider.shouldOccurs(this);
             return;
         }
 
-        this.onCustomBlockBreak(e, rem);
+        boolean shouldOverride = this.onCustomBlockBreak(e, rem);
+        if (!shouldOverride && this.overrideProtections) ProtectionOverrider.shouldOccurs(this);
         if (e.isCancelled()) return;
         this.removeBlockArtificially(b.getLocation(), rem);
     }
@@ -250,6 +270,7 @@ public abstract class CustomBlock<T> implements Listener {
     /**
      * /!\\ Called BEFORE the object is removed from the list /!\\
      * It won't be called if removeBlockArtificially
+     * @return if overrideProtections, if the protection should be overridden
      */
-    abstract public void onCustomBlockBreak(BlockBreakEvent e, T element);
+    abstract public boolean onCustomBlockBreak(BlockBreakEvent e, T element);
 }

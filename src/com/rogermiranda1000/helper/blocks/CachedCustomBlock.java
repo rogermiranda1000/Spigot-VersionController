@@ -21,16 +21,16 @@ public abstract class CachedCustomBlock<T> extends CustomBlock<T> {
     /**
      * @param id File save name
      */
-    public CachedCustomBlock(RogerPlugin plugin, String id, CustomBlockComparer isTheSameCustomBlock, StoreConversion<T> storeFunctions) {
-        super(plugin, id, isTheSameCustomBlock, storeFunctions);
+    public CachedCustomBlock(RogerPlugin plugin, String id, CustomBlockComparer isTheSameCustomBlock, boolean overrideProtections, @Nullable StoreConversion<T> storeFunctions) {
+        super(plugin, id, isTheSameCustomBlock, overrideProtections, storeFunctions);
         this.cache = new HashMap<>();
     }
 
     /**
      * @param id File save name
      */
-    public CachedCustomBlock(RogerPlugin plugin, String id, @NotNull final BlockType block, @Nullable StoreConversion<T> storeFunctions) {
-        super(plugin, id, block, storeFunctions);
+    public CachedCustomBlock(RogerPlugin plugin, String id, @NotNull final BlockType block, boolean overrideProtections, @Nullable StoreConversion<T> storeFunctions) {
+        super(plugin, id, block, overrideProtections, storeFunctions);
         this.cache = new HashMap<>();
     }
 
