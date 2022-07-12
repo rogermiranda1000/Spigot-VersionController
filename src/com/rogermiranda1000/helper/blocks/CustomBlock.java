@@ -17,6 +17,7 @@ import org.bukkit.craftbukkit.libs.jline.internal.Nullable;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,13 +58,13 @@ public abstract class CustomBlock<T> implements Listener {
     private final RogerPlugin plugin;
     private final String id;
     private RTree<T, Point> blocks;
-    private final Function<Block, Boolean> isTheSameCustomBlock;
+    private final CustomBlockComparer isTheSameCustomBlock;
     @Nullable private final StoreConversion<T> storeFunctions;
 
     /**
      * @param id File save name
      */
-    public CustomBlock(RogerPlugin plugin, String id, Function<Block, Boolean> isTheSameCustomBlock, @Nullable StoreConversion<T> storeFunctions) {
+    public CustomBlock(RogerPlugin plugin, String id, CustomBlockComparer isTheSameCustomBlock, @Nullable StoreConversion<T> storeFunctions) {
         this.gson = new GsonBuilder().setPrettyPrinting().create();
         this.plugin = plugin;
         this.id = id;
@@ -75,7 +76,10 @@ public abstract class CustomBlock<T> implements Listener {
      * @param id File save name
      */
     public CustomBlock(RogerPlugin plugin, String id, @NotNull final BlockType block, @Nullable StoreConversion<T> storeFunctions) {
-        this(plugin, id, (b)->block.equals(VersionController.get().getObject(b)), storeFunctions);
+        this(plugin, id, (e)->{
+            if (!(e instanceof BlockEvent)) return false;
+            return block.equals(VersionController.get().getObject(((BlockEvent)e).getBlock()));
+        }, storeFunctions);
     }
 
     public boolean willSave() {
@@ -117,19 +121,18 @@ public abstract class CustomBlock<T> implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onBlockPlace(BlockPlaceEvent e) {
-        Block b = e.getBlock();
-        if (!this.isTheSameCustomBlock.apply(b)) return;
+        if (!this.isTheSameCustomBlock.isSameCustomBlock(e)) return;
 
         T add = this.onCustomBlockPlace(e, this);
         if (e.isCancelled() || add == null) return;
-        this.placeBlockArtificially(add, b);
+        this.placeBlockArtificially(add, e.getBlock());
     }
 
     @EventHandler(ignoreCancelled = true)
     public void onBlockBreak(BlockBreakEvent e) {
-        Block b = e.getBlock();
-        if (!this.isTheSameCustomBlock.apply(b)) return;
+        if (!this.isTheSameCustomBlock.isSameCustomBlock(e)) return;
 
+        Block b = e.getBlock();
         T rem = this.getBlock(b.getLocation());
         if (rem == null) {
             this.plugin.printConsoleWarningMessage("Expecting element at position " + b.getLocation().toString() + ", but instead 'null' found");
