@@ -1,5 +1,6 @@
 package com.rogermiranda1000.helper;
 
+import com.rogermiranda1000.helper.blocks.CustomBlock;
 import com.rogermiranda1000.versioncontroller.Version;
 import com.rogermiranda1000.versioncontroller.VersionChecker;
 import com.rogermiranda1000.versioncontroller.VersionController;
@@ -63,7 +64,12 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor 
      * @return Method concatenation
      */
     public RogerPlugin removeCustomBlock(CustomBlock<?> cb) {
-        cb.save();
+        try {
+            cb.save();
+        } catch (IOException e) {
+            this.printConsoleErrorMessage("Error while disabling custom block"); // TODO get more info
+            e.printStackTrace();
+        }
         HandlerList.unregisterAll(cb);
 
         this.customBlocks.remove(cb);
@@ -128,7 +134,14 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor 
         this.isRunning = false;
 
         // call disable functions
-        for (CustomBlock<?> cb : this.customBlocks) cb.save();
+        for (CustomBlock<?> cb : this.customBlocks) {
+            try {
+                cb.save();
+            } catch (IOException e) {
+                this.printConsoleErrorMessage("Error while disabling custom block"); // TODO get more info
+                e.printStackTrace();
+            }
+        }
     }
 
     @Override

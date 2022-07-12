@@ -1,11 +1,16 @@
-package com.rogermiranda1000.helper;
+package com.rogermiranda1000.helper.blocks;
 
 import com.github.davidmoten.rtreemulti.Entry;
 import com.github.davidmoten.rtreemulti.RTree;
 import com.github.davidmoten.rtreemulti.geometry.Point;
+import com.github.davidmoten.rtreemulti.geometry.internal.PointDouble;
 import com.github.davidmoten.rtreemulti.internal.EntryDefault;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.rogermiranda1000.helper.RogerPlugin;
 import com.rogermiranda1000.versioncontroller.VersionController;
 import com.rogermiranda1000.versioncontroller.blocks.BlockType;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.craftbukkit.libs.jline.internal.Nullable;
@@ -15,8 +20,12 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -25,9 +34,13 @@ import java.util.function.Function;
  * @param <T> The block information to save
  */
 public abstract class CustomBlock<T> implements Listener {
+    private static final String FILE_NAME = "CustomBlocks.yml";
+
+    private final Gson gson;
+    private final RogerPlugin plugin;
     private RTree<T, Point> blocks;
     private final Function<Block, Boolean> isTheSameCustomBlock;
-    private final boolean storeInFile;
+    @Nullable private final StoreConversion<T> storeFunctions;
 
     private static Point getPoint(Location loc) {
         if (loc.getWorld() == null) return Point.create(0,0,loc.getX(), loc.getY(), loc.getZ());
@@ -37,25 +50,54 @@ public abstract class CustomBlock<T> implements Listener {
                 loc.getX(), loc.getY(), loc.getZ());
     }
 
-    public CustomBlock(@NotNull Function<Block, Boolean> isTheSameCustomBlock, boolean storeInFile) {
-        this.isTheSameCustomBlock = isTheSameCustomBlock;
-        this.storeInFile = storeInFile;
+    /**
+     * Converts a point returned by getPoint into the original location
+     */
+    private static Location getLocation(Point p) {
+        double []values = ((PointDouble)p).mins();
+        UUID world = new UUID(Double.doubleToRawLongBits(values[0]), Double.doubleToRawLongBits(values[1]));
+        return new Location(Bukkit.getWorld(world), values[2], values[3], values[4]);
     }
 
-    public CustomBlock(@NotNull final BlockType block, boolean storeInFile) {
-        this((b)->block.equals(VersionController.get().getObject(b)), storeInFile);
+    public CustomBlock(RogerPlugin plugin, Function<Block, Boolean> isTheSameCustomBlock, @Nullable StoreConversion<T> storeFunctions) {
+        this.gson = new GsonBuilder().setPrettyPrinting().create();
+        this.plugin = plugin;
+        this.isTheSameCustomBlock = isTheSameCustomBlock;
+        this.storeFunctions = storeFunctions;
+    }
+
+    public CustomBlock(RogerPlugin plugin, @NotNull final BlockType block, @Nullable StoreConversion<T> storeFunctions) {
+        this(plugin, (b)->block.equals(VersionController.get().getObject(b)), storeFunctions);
     }
 
     public void load() {
-        this.blocks = RTree.star().dimensions(5).create(); // MSB[world], LSB[world], x, y, z
-        if (!this.storeInFile) return;
+        synchronized (this) {
+            this.blocks = RTree.star().dimensions(5).create(); // MSB[world], LSB[world], x, y, z
+        }
+        if (this.storeFunctions == null) return;
 
         // TODO load
     }
 
-    public void save() {
-        if (!this.storeInFile) return;
-        // TODO save
+    public void save() throws IOException {
+        if (this.storeFunctions == null) return;
+
+        // get the output
+        final ArrayList<BasicBlock> basicBlocks = new ArrayList<>();
+        synchronized (this) {
+            this.blocks.entries().forEach(e -> basicBlocks.add(getBasicBlock(e)));
+        }
+
+        // write
+        File file = new File(this.plugin.getDataFolder(), CustomBlock.FILE_NAME);
+        FileWriter fw = new FileWriter(file);
+        this.gson.toJson(basicBlocks, fw);
+        fw.close();
+    }
+
+    private BasicBlock getBasicBlock(Entry<T,Point> e) {
+        return new BasicBlock(CustomBlock.getLocation(e.geometry()),
+                this.storeFunctions.storeName().apply(e.value()));
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -74,16 +116,21 @@ public abstract class CustomBlock<T> implements Listener {
         if (!this.isTheSameCustomBlock.apply(b)) return;
 
         T rem = this.getBlock(b.getLocation());
-        if (rem == null) throw new RuntimeException("Expecting element at position " + b.getLocation().toString() + ", but instead 'null' found");
+        if (rem == null) {
+            this.plugin.printConsoleWarningMessage("Expecting element at position " + b.getLocation().toString() + ", but instead 'null' found");
+            return;
+        }
 
         this.onCustomBlockBreak(e, this, rem);
         if (e.isCancelled()) return;
-        this.blocks = this.blocks.delete(rem, CustomBlock.getPoint(b.getLocation()));
+        synchronized (this) {
+            this.blocks = this.blocks.delete(rem, CustomBlock.getPoint(b.getLocation()));
+        }
     }
 
     // TODO onUse, onStep
 
-    public void placeBlockArtificially(T add, Location loc) {
+    synchronized public void placeBlockArtificially(T add, Location loc) {
         this.blocks = this.blocks.add(add, CustomBlock.getPoint(loc));
     }
 
@@ -103,7 +150,7 @@ public abstract class CustomBlock<T> implements Listener {
      * Get all the placed blocks of this type
      * @param blockConsumer Function to execute for each block
      */
-    public void getAllBlocks(final Consumer<T> blockConsumer) {
+    synchronized public void getAllBlocks(final Consumer<T> blockConsumer) {
         this.blocks.entries().forEach(e -> blockConsumer.accept(e.value()));
     }
 
@@ -113,7 +160,7 @@ public abstract class CustomBlock<T> implements Listener {
      * @return      Custom block; null if none
      */
     @Nullable
-    public T getBlock(Location loc) {
+    synchronized public T getBlock(Location loc) {
         Iterator<Entry<T, Point>> results = this.blocks.search(CustomBlock.getPoint(loc)).iterator();
 
         if (!results.hasNext()) return null;
@@ -125,7 +172,9 @@ public abstract class CustomBlock<T> implements Listener {
         if (rem == null) return false;
 
         Point pos = CustomBlock.getPoint(loc);
-        this.blocks = this.blocks.delete(rem, pos);
+        synchronized (this) {
+            this.blocks = this.blocks.delete(rem, pos);
+        }
         return true;
     }
 
@@ -134,12 +183,12 @@ public abstract class CustomBlock<T> implements Listener {
      * Note: T must have implemented a valid 'equals' function
      * @param val Object to remove
      */
-    public void removeBlocksArtificiallyByValue(@NotNull final T val) {
+    synchronized public void removeBlocksArtificiallyByValue(@NotNull final T val) {
         ArrayList<Entry<T,Point>> rem = new ArrayList<>();
         this.blocks.entries().forEach(e -> {
-            if (val.equals(e.value())) rem.add( new EntryDefault<>(e.value(), e.geometry()) );
+            if (val.equals(e.value())) rem.add(new EntryDefault<>(e.value(), e.geometry()));
         });
-        for (Entry<T,Point> r : rem) this.blocks = this.blocks.delete(r);
+        for (Entry<T, Point> r : rem) this.blocks = this.blocks.delete(r);
     }
 
     /**
