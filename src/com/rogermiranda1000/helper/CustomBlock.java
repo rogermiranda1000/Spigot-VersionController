@@ -65,7 +65,7 @@ public abstract class CustomBlock<T> implements Listener {
 
         T add = this.onCustomBlockPlace(e, this);
         if (e.isCancelled() || add == null) return;
-        this.blocks = this.blocks.add(add, CustomBlock.getPoint(b.getLocation()));
+        this.placeBlockArtificially(add, b);
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -125,7 +125,7 @@ public abstract class CustomBlock<T> implements Listener {
         if (rem == null) return false;
 
         Point pos = CustomBlock.getPoint(loc);
-        this.blocks.delete(rem, pos);
+        this.blocks = this.blocks.delete(rem, pos);
         return true;
     }
 
@@ -144,12 +144,14 @@ public abstract class CustomBlock<T> implements Listener {
 
     /**
      * /!\\ Called BEFORE the object is added to the list /!\\
+     * It won't be called if placeBlockArtificially
      * @return the object to add (can't be null)
      */
     abstract public T onCustomBlockPlace(BlockPlaceEvent e, CustomBlock<T> cb);
 
     /**
      * /!\\ Called BEFORE the object is removed from the list /!\\
+     * It won't be called if removeBlockArtificially
      */
     abstract public void onCustomBlockBreak(BlockBreakEvent e, CustomBlock<T> cb, T element);
 }
