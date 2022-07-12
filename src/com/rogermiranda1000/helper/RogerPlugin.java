@@ -23,16 +23,23 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor 
 
     private final Listener []listeners;
     private final CustomCommand []commands;
+    private final CustomBlock []customBlocks;
 
     /**
      * JavaPlugin with some basic functionalities.
      * /!\\ While overriding onEnable remember to call the super() function /!\\
-     * @param commands  All the commands from the plugin. It's important that in the first position you set the 'help' command
-     * @param listeners All the event listeners from the plugin
+     * @param commands      All the commands from the plugin. It's important that in the first position you set the 'help' command
+     * @param customBlocks  Plugin's custom blocks
+     * @param listeners     All the event listeners from the plugin
      */
-    public RogerPlugin(CustomCommand []commands, Listener... listeners) {
+    public RogerPlugin(CustomCommand []commands, CustomBlock []customBlocks, Listener... listeners) {
         this.commands = commands;
+        this.customBlocks = customBlocks;
         this.listeners = listeners; // Listener... is the same than Listener[]
+    }
+
+    public RogerPlugin(CustomCommand []commands, Listener... listeners) {
+        this(commands, new CustomBlock[]{}, listeners);
     }
 
     public void printConsoleErrorMessage(String msg) {
@@ -73,12 +80,22 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor 
         // register the events
         PluginManager pm = getServer().getPluginManager();
         for (Listener lis : this.listeners) pm.registerEvents(lis, this); // TODO ignore some events depending on the version
+        for (CustomBlock cb : this.customBlocks) pm.registerEvents(cb, this);
 
         if (this.commands.length > 0 && VersionController.version.compareTo(Version.MC_1_10) >= 0) {
             // if MC > 10 we can send hints onTab
             String commandBase = this.getName().toLowerCase();
             getCommand(commandBase).setTabCompleter(new HintEvent(this));
         }
+
+        // call enable functions
+        for (CustomBlock cb : this.customBlocks) cb.load();
+    }
+
+    @Override
+    public void onDisable() {
+        // call disable functions
+        for (CustomBlock cb : this.customBlocks) cb.save();
     }
 
     @Override

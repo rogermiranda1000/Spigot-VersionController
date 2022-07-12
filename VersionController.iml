@@ -17,5 +17,6 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="spigot-1.16.5" level="project" />
+    <orderEntry type="library" name="github.davidmoten.rtree.multi" level="project" />
   </component>
 </module>
