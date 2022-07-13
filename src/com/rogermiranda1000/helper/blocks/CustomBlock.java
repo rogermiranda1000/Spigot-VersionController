@@ -152,22 +152,12 @@ public abstract class CustomBlock<T> implements Listener {
 
         // get the output
         final ArrayList<BasicBlock> basicBlocks = new ArrayList<>();
-        synchronized (this) {
-            this.blocks.entries().forEach(e -> basicBlocks.add(getBasicBlock(e)));
-        }
+        this.getAllBlocks(e -> basicBlocks.add(new BasicBlock(e.getValue(), storeFunctions.storeName().apply(e.getKey()))));
 
         // write
         FileWriter fw = new FileWriter(this.getCustomBlockFile());
         this.gson.toJson(basicBlocks, fw);
         fw.close();
-    }
-
-    /**
-     * @pre storeFunctions != null
-     */
-    private BasicBlock getBasicBlock(Entry<T,Point> e) {
-        return new BasicBlock(CustomBlock.getLocation(e.geometry()),
-                this.storeFunctions.storeName().apply(e.value()));
     }
 
     @EventHandler(ignoreCancelled = true)
