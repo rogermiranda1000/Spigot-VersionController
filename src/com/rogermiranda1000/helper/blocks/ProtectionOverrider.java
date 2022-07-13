@@ -15,6 +15,9 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Overrides residence's and worldguard's OnBlockBreak
@@ -30,13 +33,14 @@ public class ProtectionOverrider {
     private final ArrayList<Object> overriders;
 
     /**
-     * Initially it's equal to overriders; if at the end it's empty the events will be launched
+     * Initially it's empty; if at the end it have the same size than overriders then the overrided protection methods must be launched
      */
-    private ArrayList<Object> allowQueue;
+    private final HashMap<BlockBreakEvent, Set<Object>> allowQueue;
 
     public ProtectionOverrider(RogerPlugin plugin) {
         this.blockBreakOverrider = new ArrayList<>();
         this.overriders = new ArrayList<>();
+        this.allowQueue = new HashMap<>();
         this.plugin = plugin;
     }
 
@@ -72,18 +76,16 @@ public class ProtectionOverrider {
         }
     }
 
-    protected static class OverriddenProtectionsPlayerH implements Listener {
+    protected static class OverriddenProtectionsPlayer implements Listener {
         @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
         public void onBlockBreak(BlockBreakEvent e) {
-            if (ProtectionOverrider.instance.allowQueue.size() > 0) return;
-            ProtectionOverrider.instance.runProtectionEvents(e);
-        }
-    }
+            synchronized (ProtectionOverrider.class) {
+                Set<Object> petitions = ProtectionOverrider.instance.allowQueue.remove(e);
+                if (petitions == null) return; // any petition
+                if (petitions.size() != ProtectionOverrider.instance.overriders.size()) return; // not enough requests
+            }
 
-    protected static class OverriddenProtectionsPlayerL implements Listener {
-        @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
-        public void onBlockBreak(BlockBreakEvent e) {
-            ProtectionOverrider.instance.allowQueue = new ArrayList<>(ProtectionOverrider.instance.overriders);
+            ProtectionOverrider.instance.runProtectionEvents(e);
         }
     }
 
@@ -93,25 +95,26 @@ public class ProtectionOverrider {
      */
     public static void instantiate(RogerPlugin plugin, Object overrider) {
         plugin.getLogger().info("Overriding protection plugins...");
-        if (ProtectionOverrider.instance != null) {
-            ProtectionOverrider.instance.overriders.add(overrider);
+        synchronized (ProtectionOverrider.class) {
+            if (ProtectionOverrider.instance != null) {
+                ProtectionOverrider.instance.overriders.add(overrider);
 
-            plugin.getLogger().info("Protection plugins already overridden.");
-            return;
+                plugin.getLogger().info("Protection plugins already overridden.");
+                return;
+            }
+
+            ProtectionOverrider.instance = new ProtectionOverrider(plugin);
+            ProtectionOverrider.instance.overrideProtections();
+            ProtectionOverrider.instance.overriders.add(overrider);
         }
 
-        ProtectionOverrider.instance = new ProtectionOverrider(plugin);
-        ProtectionOverrider.instance.overrideProtections();
-        ProtectionOverrider.instance.overriders.add(overrider);
-
-        Bukkit.getPluginManager().registerEvents(new OverriddenProtectionsPlayerL(), plugin);
-        Bukkit.getPluginManager().registerEvents(new OverriddenProtectionsPlayerH(), plugin);
+        Bukkit.getPluginManager().registerEvents(new OverriddenProtectionsPlayer(), plugin);
     }
 
     /**
      * @pre at least one object must call instantiate
      */
-    public static void deinstantiate(Object overrider) {
+    synchronized public static void deinstantiate(Object overrider) {
         ProtectionOverrider.instance.overriders.remove(overrider);
     }
 
@@ -119,7 +122,12 @@ public class ProtectionOverrider {
      * If the overridden events should occur
      * @pre at least one object must call instantiate
      */
-    public static void shouldOccurs(Object overrider) {
-        ProtectionOverrider.instance.allowQueue.remove(overrider);
+    synchronized public static void shouldOccurs(BlockBreakEvent e, Object overrider) {
+        Set<Object> petitions = ProtectionOverrider.instance.allowQueue.get(e);
+        if (petitions == null) {
+            petitions = new HashSet<>();
+            ProtectionOverrider.instance.allowQueue.put(e, petitions);
+        }
+        petitions.add(overrider);
     }
 }
