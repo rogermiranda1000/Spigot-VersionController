@@ -183,7 +183,7 @@ public abstract class CustomBlock<T> implements Listener {
     public void onBlockBreak(BlockBreakEvent e) {
         Block b = e.getBlock();
         T rem;
-        if (!this.isTheSameCustomBlock.isSameCustomBlock(e) || (rem = this.getBlock(b.getLocation())) == null) {
+        if (this.blocks == null || !this.isTheSameCustomBlock.isSameCustomBlock(e) || (rem = this.getBlock(b.getLocation())) == null) {
             if (this.overrideProtections) ProtectionOverrider.shouldOccurs(e, this);
             return;
         }
