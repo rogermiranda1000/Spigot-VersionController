@@ -147,12 +147,12 @@ public abstract class CustomBlock<T> implements Listener {
         Block b = e.getBlock();
         T rem;
         if (!this.isTheSameCustomBlock.isSameCustomBlock(e) || (rem = this.getBlock(b.getLocation())) == null) {
-            if (this.overrideProtections) ProtectionOverrider.shouldOccurs(this);
+            if (this.overrideProtections) ProtectionOverrider.shouldOccurs(e, this);
             return;
         }
 
         boolean shouldOverride = this.onCustomBlockBreak(e, rem);
-        if (!shouldOverride && this.overrideProtections) ProtectionOverrider.shouldOccurs(this);
+        if (!shouldOverride && this.overrideProtections) ProtectionOverrider.shouldOccurs(e, this);
         if (!e.isCancelled() && this.onEventSuceedRemove) this.removeBlockArtificially(b.getLocation(), rem);
     }
 
