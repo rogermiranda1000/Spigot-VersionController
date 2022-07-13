@@ -154,10 +154,12 @@ public abstract class CustomBlock<T> implements Listener {
         final ArrayList<BasicBlock> basicBlocks = new ArrayList<>();
         this.getAllBlocks(e -> basicBlocks.add(new BasicBlock(e.getValue(), storeFunctions.storeName().apply(e.getKey()))));
 
-        // write
-        FileWriter fw = new FileWriter(this.getCustomBlockFile());
-        this.gson.toJson(basicBlocks, fw);
-        fw.close();
+        if (basicBlocks.size() > 0) {
+            // write
+            try (FileWriter fw = new FileWriter(this.getCustomBlockFile())) {
+                this.gson.toJson(basicBlocks, fw);
+            }
+        }
     }
 
     @EventHandler(ignoreCancelled = true)
