@@ -6,6 +6,7 @@ import org.bukkit.Location;
 import org.bukkit.craftbukkit.libs.jline.internal.Nullable;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -44,7 +45,7 @@ public abstract class CachedCustomBlock<T> extends CustomBlock<T> {
     }
 
     @Override
-    public void load() {
+    public void load() throws IOException {
         super.load();
 
         // synchronized by father

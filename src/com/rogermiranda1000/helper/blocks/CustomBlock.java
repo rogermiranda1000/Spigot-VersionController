@@ -7,6 +7,7 @@ import com.github.davidmoten.rtreemulti.geometry.internal.PointDouble;
 import com.github.davidmoten.rtreemulti.internal.EntryDefault;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonSyntaxException;
 import com.rogermiranda1000.helper.RogerPlugin;
 import com.rogermiranda1000.versioncontroller.VersionController;
 import com.rogermiranda1000.versioncontroller.blocks.BlockType;
@@ -23,10 +24,12 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Scanner;
 import java.util.UUID;
 import java.util.function.Consumer;
 
@@ -102,11 +105,46 @@ public abstract class CustomBlock<T> implements Listener {
         return this.storeFunctions != null;
     }
 
-    public void load() {
+    private File getCustomBlockFile() {
+        File folder = this.plugin.getDataFolder();
+        if (!folder.exists()) folder.mkdirs();
+
+        folder = new File(folder.getPath() + File.separatorChar + "CustomBlocks");
+        if (!folder.exists()) {
+            folder.mkdirs();
+
+            // first time creating the folder; create a warning
+            File readme = new File(folder, "README.txt");
+            try (FileWriter fw = new FileWriter(readme)) {
+                fw.write("This are internal-use only files; do not modify unless specifically suggested.");
+            } catch (IOException ignored) {}
+        }
+
+        return new File(folder, this.id + ".json");
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void load() throws IOException {
         this.removeAllBlocksArtificially();
         if (!this.willSave()) return;
 
-        // TODO load
+        CustomBlocksEntry<T> []blocks;
+        try {
+            StringBuilder sb = new StringBuilder();
+            Scanner scanner = new Scanner(this.getCustomBlockFile());
+            while (scanner.hasNextLine()) sb.append(scanner.nextLine());
+            scanner.close();
+
+            blocks = BasicBlock.getEntries(this.gson.fromJson(sb.toString(), BasicBlock[].class), this.storeFunctions.loadName());
+        } catch (JsonSyntaxException ex) {
+            throw new IOException(ex.getMessage());
+        } catch (FileNotFoundException ignore) {
+            return; // no file, no blocks :)
+        }
+        for (CustomBlocksEntry<T> e : blocks) this.placeBlockArtificially(e);
     }
 
     public void save() throws IOException {
@@ -119,8 +157,7 @@ public abstract class CustomBlock<T> implements Listener {
         }
 
         // write
-        File file = new File(this.plugin.getDataFolder(), this.id + ".json");
-        FileWriter fw = new FileWriter(file);
+        FileWriter fw = new FileWriter(this.getCustomBlockFile());
         this.gson.toJson(basicBlocks, fw);
         fw.close();
     }
@@ -160,6 +197,10 @@ public abstract class CustomBlock<T> implements Listener {
 
     synchronized public void placeBlockArtificially(T add, Location loc) {
         this.blocks = this.blocks.add(add, CustomBlock.getPoint(loc));
+    }
+
+    public void placeBlockArtificially(CustomBlocksEntry<T> add) {
+        this.placeBlockArtificially(add.getKey(), add.getValue());
     }
 
     public void placeBlocksArtificially(T add, Iterable<Location> loc) {

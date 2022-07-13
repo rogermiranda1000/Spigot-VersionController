@@ -1,6 +1,9 @@
 package com.rogermiranda1000.helper.blocks;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
+
+import java.util.function.Function;
 
 public class BasicBlock {
     private final String world;
@@ -15,5 +18,15 @@ public class BasicBlock {
         this.y = loc.getY();
         this.z = loc.getZ();
         this.object = object;
+    }
+
+    public static <T> CustomBlocksEntry<T> []getEntries(BasicBlock []basicBlocks, Function<String,T> loader) {
+        @SuppressWarnings("unchecked")
+        CustomBlocksEntry<T>[] r = new CustomBlocksEntry[basicBlocks.length];
+        for (int i = 0; i < r.length; i++) {
+            BasicBlock o = basicBlocks[i];
+            r[i] = new CustomBlocksEntry<>(loader.apply(o.object), new Location(Bukkit.getWorld(o.world), o.x, o.y, o.z));
+        }
+        return r;
     }
 }

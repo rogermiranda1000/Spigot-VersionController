@@ -11,7 +11,6 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.craftbukkit.libs.jline.internal.Nullable;
 import org.bukkit.entity.Player;
-import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -61,7 +60,11 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor 
         this.customBlocks.add(cb);
 
         if (this.isRunning) {
-            cb.load();
+            try {
+                cb.load();
+            } catch (IOException ex) {
+                this.printConsoleErrorMessage("Invalid file format. The block '" + cb.getId() + "' can't be loaded.");
+            }
             cb.register();
         }
 
@@ -105,6 +108,10 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor 
     @Nullable
     abstract public String getPluginID();
 
+    /**
+     * Check for updates, starts the listeners (& commands) and loads CustomBlocks
+     * The sons must call super.onEnable()
+     */
     @Override
     public void onEnable() {
         this.isRunning = true;
@@ -135,7 +142,13 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor 
         }
 
         // call enable functions
-        for (CustomBlock<?> cb : this.customBlocks) cb.load();
+        for (CustomBlock<?> cb : this.customBlocks) {
+            try {
+                cb.load();
+            } catch (IOException ex) {
+                this.printConsoleErrorMessage("Invalid file format. The block '" + cb.getId() + "' can't be loaded.");
+            }
+        }
     }
 
     @Override
