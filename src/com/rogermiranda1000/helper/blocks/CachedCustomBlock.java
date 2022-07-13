@@ -78,10 +78,15 @@ public abstract class CachedCustomBlock<T> extends CustomBlock<T> {
      * @param blockConsumer Function to call for each value found
      */
     @Override
-    synchronized public void getAllBlocksByValue(@NotNull final T val, final Consumer<CustomBlocksEntry<T>> blockConsumer) {
-        Set<Location> locations = this.cache.get(val);
+    public void getAllBlocksByValue(@NotNull final T val, final Consumer<CustomBlocksEntry<T>> blockConsumer) {
+        Set<Location> locations = this.getAllBlocksByValue(val);
         if (locations == null) return; // however, it shouldn't happen
         locations.forEach(l -> blockConsumer.accept(new CustomBlocksEntry<>(val, l)));
+    }
+
+    @Nullable
+    synchronized public Set<Location> getAllBlocksByValue(@NotNull final T val) {
+        return this.cache.get(val);
     }
 
     @Override

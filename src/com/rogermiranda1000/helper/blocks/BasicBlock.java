@@ -2,6 +2,7 @@ package com.rogermiranda1000.helper.blocks;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
 
@@ -20,7 +21,7 @@ public class BasicBlock {
         this.object = object;
     }
 
-    public static <T> CustomBlocksEntry<T> []getEntries(BasicBlock []basicBlocks, Function<String,T> loader) {
+    public static <T> CustomBlocksEntry<T> []getEntries(@NotNull BasicBlock []basicBlocks, @NotNull Function<String,T> loader) {
         @SuppressWarnings("unchecked")
         CustomBlocksEntry<T>[] r = new CustomBlocksEntry[basicBlocks.length];
         for (int i = 0; i < r.length; i++) {
