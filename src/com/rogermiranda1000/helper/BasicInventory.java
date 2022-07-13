@@ -33,14 +33,14 @@ public abstract class BasicInventory implements Listener {
     /**
      * /!\\ only for sons of BasicInventory /!\\
      */
-    public Inventory getInventory() {
+    synchronized public Inventory getInventory() {
         return this.inv;
     }
 
     /**
      * /!\\ only for sons of BasicInventory /!\\
      */
-    public void setInventory(Inventory inv) {
+    synchronized public void setInventory(Inventory inv) {
         this.inv = inv;
     }
 
@@ -57,7 +57,7 @@ public abstract class BasicInventory implements Listener {
         // run on next tick
         Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(this.plugin, ()-> {
             p.openInventory(this.inv);
-            synchronized (this.playersWithOpenInventory) {
+            synchronized (this) {
                 this.playersWithOpenInventory.add(p);
             }
         }, 1L);
@@ -65,8 +65,10 @@ public abstract class BasicInventory implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onClick(InventoryClickEvent e) {
-        if (!e.getInventory().equals(this.inv)) return;
-        if (!this.inv.equals(e.getClickedInventory())) return;
+        synchronized (this) {
+            if (!e.getInventory().equals(this.inv)) return;
+            if (!this.inv.equals(e.getClickedInventory())) return;
+        }
 
         if (this.cancelAllEvents) e.setCancelled(true);
 
