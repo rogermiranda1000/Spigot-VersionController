@@ -16,21 +16,25 @@ import java.util.function.Consumer;
  */
 public abstract class CachedCustomBlock<T> extends CustomBlock<T> {
     private final HashMap<T, List<Location>> cache;
+    private final boolean preserveObjects;
 
     /**
      * @param id File save name
+     * @param preserveObjects Even if the last location is removed, preserve. The methods removeAllBlocksArtificially, addObject and removeObject overrides this functionality
      */
-    public CachedCustomBlock(RogerPlugin plugin, String id, CustomBlockComparer isTheSameCustomBlock, boolean overrideProtections, boolean onEventSuceedRemove, @Nullable StoreConversion<T> storeFunctions) {
+    public CachedCustomBlock(RogerPlugin plugin, String id, CustomBlockComparer isTheSameCustomBlock, boolean overrideProtections, boolean onEventSuceedRemove, @Nullable StoreConversion<T> storeFunctions, boolean preserveObjects) {
         super(plugin, id, isTheSameCustomBlock, overrideProtections, onEventSuceedRemove, storeFunctions);
         this.cache = new HashMap<>();
+        this.preserveObjects = preserveObjects;
     }
 
     /**
      * @param id File save name
      */
-    public CachedCustomBlock(RogerPlugin plugin, String id, @NotNull final BlockType block, boolean overrideProtections, boolean onEventSuceedRemove, @Nullable StoreConversion<T> storeFunctions) {
+    public CachedCustomBlock(RogerPlugin plugin, String id, @NotNull final BlockType block, boolean overrideProtections, boolean onEventSuceedRemove, @Nullable StoreConversion<T> storeFunctions, boolean preserveObjects) {
         super(plugin, id, block, overrideProtections, onEventSuceedRemove, storeFunctions);
         this.cache = new HashMap<>();
+        this.preserveObjects = preserveObjects;
     }
 
     public Set<T> getAllValues() {
@@ -39,6 +43,20 @@ public abstract class CachedCustomBlock<T> extends CustomBlock<T> {
 
     public int getDifferentValuesNum() {
         return this.cache.size();
+    }
+
+    /**
+     * Useful while using preserveObjects
+     */
+    public void addObject(T obj) {
+        this.cache.put(obj, new ArrayList<>());
+    }
+
+    /**
+     * Useful while using preserveObjects
+     */
+    public void removeObject(T obj) {
+        this.cache.remove(obj);
     }
 
     @Override
@@ -106,7 +124,7 @@ public abstract class CachedCustomBlock<T> extends CustomBlock<T> {
         synchronized (this) {
             List<Location> s = this.cache.get(rem);
             s.remove(loc);
-            if (s.size() == 0) this.cache.remove(rem); // the last element was removed
+            if (!this.preserveObjects && s.size() == 0) this.cache.remove(rem); // the last element was removed
         }
     }
 
@@ -118,7 +136,7 @@ public abstract class CachedCustomBlock<T> extends CustomBlock<T> {
             this.blocks = this.blocks.delete(val, CustomBlock.getPoint(loc));
             if (blockConsumer != null) blockConsumer.accept(new CustomBlocksEntry<>(val, loc));
         }
-        this.cache.remove(val);
+        if (!this.preserveObjects) this.cache.remove(val);
     }
 
     @Override
