@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -56,6 +57,17 @@ public abstract class CachedCustomBlock<T> extends CustomBlock<T> {
 
             s.add(e.getValue());
         });
+    }
+
+    /**
+     * Get all the placed blocks of this type
+     * @param blockConsumer Function to execute for each block
+     */
+    @Override
+    synchronized public void getAllBlocks(final Consumer<CustomBlocksEntry<T>> blockConsumer) {
+        for (Map.Entry<T,Set<Location>> e : this.cache.entrySet()) {
+            for (Location loc : e.getValue()) blockConsumer.accept(new CustomBlocksEntry<>(e.getKey(), loc));
+        }
     }
 
     /**
