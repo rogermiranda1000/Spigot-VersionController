@@ -72,7 +72,7 @@ public abstract class CustomBlock<T> implements Listener {
      * @param onEventSuceedRemove After a successful event (not canceled) remove the block from the list
      */
     public CustomBlock(RogerPlugin plugin, String id, CustomBlockComparer isTheSameCustomBlock, boolean overrideProtections, boolean onEventSuceedRemove, @Nullable StoreConversion<T> storeFunctions) {
-        this.gson = new GsonBuilder().setPrettyPrinting().create();
+        this.gson = new GsonBuilder()/*.setPrettyPrinting()*/.create();
         this.plugin = plugin;
         this.id = id;
         this.isTheSameCustomBlock = isTheSameCustomBlock;
