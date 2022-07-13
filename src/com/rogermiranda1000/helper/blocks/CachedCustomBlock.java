@@ -7,10 +7,7 @@ import org.bukkit.craftbukkit.libs.jline.internal.Nullable;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Consumer;
 
 /**
@@ -18,7 +15,7 @@ import java.util.function.Consumer;
  * @param <T> The block information to save
  */
 public abstract class CachedCustomBlock<T> extends CustomBlock<T> {
-    private final HashMap<T, Set<Location>> cache;
+    private final HashMap<T, List<Location>> cache;
 
     /**
      * @param id File save name
@@ -50,9 +47,9 @@ public abstract class CachedCustomBlock<T> extends CustomBlock<T> {
 
         // synchronized by father
         super.getAllBlocks(e -> {
-            Set<Location> s = this.cache.get(e.getKey());
+            List<Location> s = this.cache.get(e.getKey());
             if (s == null) {
-                s = new HashSet<>();
+                s = new ArrayList<>();
                 this.cache.put(e.getKey(), s);
             }
 
@@ -66,7 +63,7 @@ public abstract class CachedCustomBlock<T> extends CustomBlock<T> {
      */
     @Override
     synchronized public void getAllBlocks(final Consumer<CustomBlocksEntry<T>> blockConsumer) {
-        for (Map.Entry<T,Set<Location>> e : this.cache.entrySet()) {
+        for (Map.Entry<T,List<Location>> e : this.cache.entrySet()) {
             for (Location loc : e.getValue()) blockConsumer.accept(new CustomBlocksEntry<>(e.getKey(), loc));
         }
     }
@@ -79,13 +76,13 @@ public abstract class CachedCustomBlock<T> extends CustomBlock<T> {
      */
     @Override
     public void getAllBlocksByValue(@NotNull final T val, final Consumer<CustomBlocksEntry<T>> blockConsumer) {
-        Set<Location> locations = this.getAllBlocksByValue(val);
+        List<Location> locations = this.getAllBlocksByValue(val);
         if (locations == null) return; // however, it shouldn't happen
         locations.forEach(l -> blockConsumer.accept(new CustomBlocksEntry<>(val, l)));
     }
 
     @Nullable
-    synchronized public Set<Location> getAllBlocksByValue(@NotNull final T val) {
+    synchronized public List<Location> getAllBlocksByValue(@NotNull final T val) {
         return this.cache.get(val);
     }
 
@@ -93,9 +90,9 @@ public abstract class CachedCustomBlock<T> extends CustomBlock<T> {
     public void placeBlockArtificially(T add, Location loc) {
         super.placeBlockArtificially(add, loc);
         synchronized (this) {
-            Set<Location> s = this.cache.get(add);
+            List<Location> s = this.cache.get(add);
             if (s == null) {
-                s = new HashSet<>();
+                s = new ArrayList<>();
                 this.cache.put(add, s);
             }
 
@@ -107,7 +104,7 @@ public abstract class CachedCustomBlock<T> extends CustomBlock<T> {
     protected void removeBlockArtificially(Location loc, @NotNull T rem) {
         super.removeBlockArtificially(loc, rem);
         synchronized (this) {
-            Set<Location> s = this.cache.get(rem);
+            List<Location> s = this.cache.get(rem);
             s.remove(loc);
             if (s.size() == 0) this.cache.remove(rem); // the last element was removed
         }
@@ -115,7 +112,7 @@ public abstract class CachedCustomBlock<T> extends CustomBlock<T> {
 
     @Override
     synchronized public void removeBlocksArtificiallyByValue(@NotNull final T val, @Nullable final Consumer<CustomBlocksEntry<T>> blockConsumer) {
-        Set<Location> s = this.cache.get(val);
+        List<Location> s = this.cache.get(val);
         if (s == null) return;
         for (Location loc : s) {
             this.blocks = this.blocks.delete(val, CustomBlock.getPoint(loc));
