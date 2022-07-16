@@ -76,6 +76,8 @@ public abstract class CustomBlock<T> implements Listener {
         this.storeFunctions = storeFunctions;
         this.overrideProtections = overrideProtections;
         this.onEventSuceedRemove = onEventSuceedRemove;
+
+        this.removeAllBlocksArtificially();
     }
 
     /**
