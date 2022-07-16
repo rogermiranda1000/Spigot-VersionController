@@ -216,6 +216,10 @@ public abstract class CustomBlock<T> implements Listener {
         this.blocks.entries().forEach(e -> blockConsumer.accept(new CustomBlocksEntry<>(e.value(), CustomBlock.getLocation(e.geometry()))));
     }
 
+    synchronized public int getNumBlocks() {
+        return this.blocks.size();
+    }
+
     /**
      * Get all the locations by value.
      * O(n); not recommended using

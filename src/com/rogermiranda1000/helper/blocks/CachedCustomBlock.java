@@ -104,6 +104,10 @@ public abstract class CachedCustomBlock<T> extends CustomBlock<T> {
         return this.cache.get(val);
     }
 
+    synchronized public int getNumUniqueValues() {
+        return this.cache.size();
+    }
+
     @Override
     public void placeBlockArtificially(T add, Location loc) {
         super.placeBlockArtificially(add, loc);
