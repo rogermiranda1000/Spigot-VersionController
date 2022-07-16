@@ -125,7 +125,6 @@ public abstract class CustomBlock<T> implements Listener {
     }
 
     public void load() throws IOException {
-        this.removeAllBlocksArtificially();
         if (!this.willSave()) return;
 
         CustomBlocksEntry<T> []blocks;
