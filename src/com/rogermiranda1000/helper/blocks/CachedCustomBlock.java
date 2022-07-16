@@ -12,6 +12,7 @@ import java.util.function.Consumer;
 
 /**
  * CustomBlock with a HashMap to save the T
+ * Solves some O(n) problems that CustomBlock has
  * @param <T> The block information to save
  */
 public abstract class CachedCustomBlock<T> extends CustomBlock<T> {
@@ -37,12 +38,14 @@ public abstract class CachedCustomBlock<T> extends CustomBlock<T> {
         this.preserveObjects = preserveObjects;
     }
 
-    public Set<T> getAllValues() {
+    @Override
+    synchronized public Set<T> getAllValues() {
         return this.cache.keySet();
     }
 
-    public int getDifferentValuesNum() {
-        return this.cache.size();
+    @Override
+    synchronized public int getDifferentValuesNum() {
+        return this.cache.size(); // optimized
     }
 
     /**
@@ -88,6 +91,7 @@ public abstract class CachedCustomBlock<T> extends CustomBlock<T> {
 
     /**
      * Get all the locations by value.
+     * O(n); not recommended using
      * Note: T must have implemented a valid 'equals' function
      * @param val           Value
      * @param blockConsumer Function to call for each value found
@@ -102,10 +106,6 @@ public abstract class CachedCustomBlock<T> extends CustomBlock<T> {
     @Nullable
     synchronized public List<Location> getAllBlocksByValue(@NotNull final T val) {
         return this.cache.get(val);
-    }
-
-    synchronized public int getNumUniqueValues() {
-        return this.cache.size();
     }
 
     @Override

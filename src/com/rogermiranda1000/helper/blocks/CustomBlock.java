@@ -27,10 +27,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.Scanner;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Consumer;
 
 /**
@@ -231,6 +228,26 @@ public abstract class CustomBlock<T> implements Listener {
         this.getAllBlocks((e) -> {
             if (val.equals(e.getKey())) blockConsumer.accept(e);
         });
+    }
+
+    /**
+     * Get all values.
+     * O(n); not recommended using
+     * Note: T must have implemented a valid 'equals' function
+     */
+    synchronized public Set<T> getAllValues() {
+        final Set<T> r = new HashSet<>();
+        this.getAllBlocks(e -> r.add(e.getKey()));
+        return r;
+    }
+
+    /**
+     * Get the number of different values.
+     * O(n); not recommended using
+     * Note: T must have implemented a valid 'equals' function
+     */
+    public int getDifferentValuesNum() {
+        return this.getAllValues().size();
     }
 
     /**
