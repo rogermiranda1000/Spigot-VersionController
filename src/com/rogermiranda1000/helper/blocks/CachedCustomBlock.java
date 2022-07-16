@@ -16,7 +16,7 @@ import java.util.function.Consumer;
  * @param <T> The block information to save
  */
 public abstract class CachedCustomBlock<T> extends CustomBlock<T> {
-    private final HashMap<T, List<Location>> cache;
+    private HashMap<T, List<Location>> cache;
     private final boolean preserveObjects;
 
     /**
@@ -25,8 +25,8 @@ public abstract class CachedCustomBlock<T> extends CustomBlock<T> {
      */
     public CachedCustomBlock(RogerPlugin plugin, String id, CustomBlockComparer isTheSameCustomBlock, boolean overrideProtections, boolean onEventSuceedRemove, @Nullable StoreConversion<T> storeFunctions, boolean preserveObjects) {
         super(plugin, id, isTheSameCustomBlock, overrideProtections, onEventSuceedRemove, storeFunctions);
-        this.cache = new HashMap<>();
         this.preserveObjects = preserveObjects;
+        // removeAllBlocksArtificially called by super
     }
 
     /**
@@ -34,8 +34,8 @@ public abstract class CachedCustomBlock<T> extends CustomBlock<T> {
      */
     public CachedCustomBlock(RogerPlugin plugin, String id, @NotNull final BlockType block, boolean overrideProtections, boolean onEventSuceedRemove, @Nullable StoreConversion<T> storeFunctions, boolean preserveObjects) {
         super(plugin, id, block, overrideProtections, onEventSuceedRemove, storeFunctions);
-        this.cache = new HashMap<>();
         this.preserveObjects = preserveObjects;
+        // removeAllBlocksArtificially called by super
     }
 
     @Override
@@ -147,7 +147,7 @@ public abstract class CachedCustomBlock<T> extends CustomBlock<T> {
     public void removeAllBlocksArtificially() {
         super.removeAllBlocksArtificially();
         synchronized (this) {
-            this.cache.clear();
+            this.cache = new HashMap<>();
         }
     }
 }
