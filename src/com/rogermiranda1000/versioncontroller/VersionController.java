@@ -61,7 +61,7 @@ public class VersionController extends ItemManager implements BlockManager, Part
         try {
             String jar = p.getProperty("java.class.path");
             if (jar == null || jar.equals("")) throw new NullPointerException();
-            return "./" + jar;
+            return jar;
         } catch (NullPointerException ex) {
             System.err.println("Couldn't get server's jar path. List of properties:");
             p.list(System.err);
