@@ -127,7 +127,6 @@ public abstract class CustomBlock<T> implements Listener {
     }
 
     public void load() throws IOException {
-        //this.removeAllBlocksArtificially();
         if (!this.willSave()) return;
 
         CustomBlocksEntry<T> []blocks;
@@ -211,7 +210,6 @@ public abstract class CustomBlock<T> implements Listener {
      * @param blockConsumer Function to execute for each block
      */
     synchronized public void getAllBlocks(final Consumer<CustomBlocksEntry<T>> blockConsumer) {
-        // /!\\ FOR OPTIMIZATION REASON, THIS CODE IS DUPLICATED IN CachedCustomBlock; CHANGE THAT CODE TOO /!\\
         this.blocks.entries().forEach(e -> blockConsumer.accept(new CustomBlocksEntry<>(e.value(), CustomBlock.getLocation(e.geometry()))));
     }
 

@@ -166,6 +166,12 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor 
         }
     }
 
+    public void clearCustomBlocks() {
+        for (CustomBlock<?> cb : this.customBlocks) {
+            cb.removeAllBlocksArtificially();
+        }
+    }
+
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command cmd, @NotNull String label, @NotNull String[] args) {
         for (CustomCommand command : this.commands) {

@@ -51,14 +51,14 @@ public abstract class CachedCustomBlock<T> extends CustomBlock<T> {
     /**
      * Useful while using preserveObjects
      */
-    public void addObject(T obj) {
+    synchronized public void addObject(T obj) {
         this.cache.put(obj, new ArrayList<>());
     }
 
     /**
      * Useful while using preserveObjects
      */
-    public void removeObject(T obj) {
+    synchronized public void removeObject(T obj) {
         this.cache.remove(obj);
     }
 
@@ -82,12 +82,13 @@ public abstract class CachedCustomBlock<T> extends CustomBlock<T> {
      * Get all the placed blocks of this type
      * @param blockConsumer Function to execute for each block
      */
-    @Override
+    // TODO why it doesn't work?
+    /*@Override
     synchronized public void getAllBlocks(final Consumer<CustomBlocksEntry<T>> blockConsumer) {
         for (Map.Entry<T,List<Location>> e : this.cache.entrySet()) {
             for (Location loc : e.getValue()) blockConsumer.accept(new CustomBlocksEntry<>(e.getKey(), loc));
         }
-    }
+    }*/
 
     /**
      * Get all the locations by value.
