@@ -15,17 +15,17 @@ import com.rogermiranda1000.versioncontroller.particles.ParticleManager;
 import com.rogermiranda1000.versioncontroller.particles.ParticlePost9;
 import com.rogermiranda1000.versioncontroller.particles.ParticlePre9;
 import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.craftbukkit.libs.jline.internal.Nullable;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
+
+import java.net.URISyntaxException;
+import java.util.Properties;
 
 /**
  * Singleton object for cross-version compatibility
@@ -34,8 +34,9 @@ public class VersionController extends ItemManager implements BlockManager, Part
     private static VersionController versionController = null;
     public static final Version version = VersionController.getVersion();
     public static final boolean isPaper = VersionController.getMCPaper();
-    public static final String nmsPackage = Bukkit.getServer().getClass().getPackage().getName()
-            .replace("org.bukkit.craftbukkit", "net.minecraft.server");
+    public static final String bukkitPackage = Bukkit.getServer().getClass().getPackage().getName();
+    public static final String nmsPackage = bukkitPackage.replace("org.bukkit.craftbukkit", "net.minecraft.server");
+    public static final String runningJarPath = VersionController.getJarPath();
 
     private static final BlockManager blockManager = (VersionController.version.compareTo(Version.MC_1_13) < 0) ? new BlockPre13() : new BlockPost13();
     private static final ItemManager itemManager = (VersionController.version.compareTo(Version.MC_1_9) < 0) ? new ItemPre9() : new ItemPost9();
@@ -49,6 +50,23 @@ public class VersionController extends ItemManager implements BlockManager, Part
     private static Version getVersion() {
         // TODO get the full version
         return new Version(1, Integer.parseInt(Bukkit.getBukkitVersion().split("-")[0].split("\\.")[1]), 0);
+    }
+
+    /**
+     * @author https://www.codegrepper.com/code-examples/java/java+get+location+of+jar+file
+     * @author https://mkyong.com/java/java-get-the-name-or-path-of-a-running-jar-file/
+     */
+    private static String getJarPath() {
+        Properties p = System.getProperties();
+        try {
+            String jar = p.getProperty("java.class.path");
+            if (jar == null || jar.equals("")) throw new NullPointerException();
+            return jar;
+        } catch (NullPointerException ex) {
+            System.err.println("Couldn't get server's jar path. List of properties:");
+            p.list(System.err);
+            return "";
+        }
     }
 
     /**
