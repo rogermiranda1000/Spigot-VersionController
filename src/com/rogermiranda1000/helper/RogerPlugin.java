@@ -1,5 +1,6 @@
 package com.rogermiranda1000.helper;
 
+import com.rogermiranda1000.helper.blocks.CustomBlock;
 import com.rogermiranda1000.versioncontroller.Version;
 import com.rogermiranda1000.versioncontroller.VersionChecker;
 import com.rogermiranda1000.versioncontroller.VersionController;
@@ -16,6 +17,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor {
     public final String clearPrefix = ChatColor.GOLD.toString() + ChatColor.BOLD + "[" + this.getName() + "] " + ChatColor.GREEN,
@@ -23,16 +25,68 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor 
 
     private final Listener []listeners;
     private final CustomCommand []commands;
+    private final ArrayList<CustomBlock<?>> customBlocks;
+
+    private boolean isRunning;
 
     /**
      * JavaPlugin with some basic functionalities.
      * /!\\ While overriding onEnable remember to call the super() function /!\\
-     * @param commands  All the commands from the plugin. It's important that in the first position you set the 'help' command
-     * @param listeners All the event listeners from the plugin
+     * @param commands      All the commands from the plugin. It's important that in the first position you set the 'help' command
+     * @param listeners     All the event listeners from the plugin
      */
     public RogerPlugin(CustomCommand []commands, Listener... listeners) {
+        this.customBlocks = new ArrayList<>();
+        this.isRunning = false;
         this.commands = commands;
         this.listeners = listeners; // Listener... is the same than Listener[]
+    }
+
+    /**
+     * Called to add a new custom block
+     * @return Method concatenation
+     */
+    // TODO on stop remove all?
+    public RogerPlugin addCustomBlock(CustomBlock<?> cb) {
+        if (cb.willSave()) {
+            try {
+                Class.forName("com.google.gson.JsonSyntaxException");
+            } catch (ClassNotFoundException ex) {
+                this.printConsoleErrorMessage( this.getName() + " needs Gson in order to work.");
+                return this;
+            }
+        }
+
+        this.customBlocks.add(cb);
+
+        if (this.isRunning) {
+            try {
+                cb.load();
+            } catch (IOException ex) {
+                this.printConsoleErrorMessage("Invalid file format. The block '" + cb.getId() + "' can't be loaded.");
+            }
+            cb.register();
+        }
+
+        return this;
+    }
+
+    /**
+     * Called while the server is running if the block must be removed (DON'T call this onStop)
+     * @return Method concatenation
+     */
+    public RogerPlugin removeCustomBlock(CustomBlock<?> cb) {
+        try {
+            cb.save();
+        } catch (IOException e) {
+            this.printConsoleErrorMessage("Error while disabling custom block"); // TODO get more info
+            e.printStackTrace();
+        }
+        cb.unregister();
+
+        this.customBlocks.remove(cb);
+
+        return this;
     }
 
     public void printConsoleErrorMessage(String msg) {
@@ -54,8 +108,14 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor 
     @Nullable
     abstract public String getPluginID();
 
+    /**
+     * Check for updates, starts the listeners (& commands) and loads CustomBlocks
+     * The sons must call super.onEnable()
+     */
     @Override
     public void onEnable() {
+        this.isRunning = true;
+
         // TODO any way to save the instance here?
 
         Bukkit.getScheduler().runTaskAsynchronously(this,()->{
@@ -73,11 +133,42 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor 
         // register the events
         PluginManager pm = getServer().getPluginManager();
         for (Listener lis : this.listeners) pm.registerEvents(lis, this); // TODO ignore some events depending on the version
+        for (CustomBlock<?> cb : this.customBlocks) cb.register();
 
         if (this.commands.length > 0 && VersionController.version.compareTo(Version.MC_1_10) >= 0) {
             // if MC > 10 we can send hints onTab
             String commandBase = this.getName().toLowerCase();
             getCommand(commandBase).setTabCompleter(new HintEvent(this));
+        }
+
+        // call enable functions
+        for (CustomBlock<?> cb : this.customBlocks) {
+            try {
+                cb.load();
+            } catch (IOException ex) {
+                this.printConsoleErrorMessage("Invalid file format. The block '" + cb.getId() + "' can't be loaded.");
+            }
+        }
+    }
+
+    @Override
+    public void onDisable() {
+        this.isRunning = false;
+
+        // call disable functions
+        for (CustomBlock<?> cb : this.customBlocks) {
+            try {
+                cb.save();
+            } catch (IOException e) {
+                this.printConsoleErrorMessage("Error while disabling custom block"); // TODO get more info
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void clearCustomBlocks() {
+        for (CustomBlock<?> cb : this.customBlocks) {
+            cb.removeAllBlocksArtificially();
         }
     }
 
