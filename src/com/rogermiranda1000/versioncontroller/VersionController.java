@@ -27,6 +27,8 @@ import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 
+import java.net.URISyntaxException;
+
 /**
  * Singleton object for cross-version compatibility
  */
@@ -36,6 +38,7 @@ public class VersionController extends ItemManager implements BlockManager, Part
     public static final boolean isPaper = VersionController.getMCPaper();
     public static final String nmsPackage = Bukkit.getServer().getClass().getPackage().getName()
             .replace("org.bukkit.craftbukkit", "net.minecraft.server");
+    public static final String runningJarPath = VersionController.getJarPath();
 
     private static final BlockManager blockManager = (VersionController.version.compareTo(Version.MC_1_13) < 0) ? new BlockPre13() : new BlockPost13();
     private static final ItemManager itemManager = (VersionController.version.compareTo(Version.MC_1_9) < 0) ? new ItemPre9() : new ItemPost9();
@@ -49,6 +52,18 @@ public class VersionController extends ItemManager implements BlockManager, Part
     private static Version getVersion() {
         // TODO get the full version
         return new Version(1, Integer.parseInt(Bukkit.getBukkitVersion().split("-")[0].split("\\.")[1]), 0);
+    }
+
+    /**
+     * @author https://mkyong.com/java/java-get-the-name-or-path-of-a-running-jar-file/
+     */
+    private static String getJarPath() {
+        try {
+            return VersionController.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath();
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+            return "";
+        }
     }
 
     /**
