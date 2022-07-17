@@ -9,16 +9,16 @@ import java.util.function.Function;
 
 public class BasicBlock {
     private final String world;
-    private final double x;
-    private final double y;
-    private final double z;
+    private final int x;
+    private final int y;
+    private final int z;
     private final String object;
 
     public BasicBlock(Location loc, String object) {
         this.world = (loc.getWorld() != null) ? loc.getWorld().getName() : null;
-        this.x = loc.getX();
-        this.y = loc.getY();
-        this.z = loc.getZ();
+        this.x = loc.getBlockX();
+        this.y = loc.getBlockY();
+        this.z = loc.getBlockZ();
         this.object = object;
     }
 
@@ -32,7 +32,7 @@ public class BasicBlock {
             BasicBlock o = basicBlocks[i];
             T object = loader.apply(o.object);
             if (object == null) throw new InvalidParameterException("Loader returns null while processing " + o.toString());
-            r[i] = new CustomBlocksEntry<>(object, new Location(Bukkit.getWorld(o.world), o.x, o.y, o.z));
+            r[i] = new CustomBlocksEntry<>(object, new Location(Bukkit.getWorld(o.world), (double)o.x, (double)o.y, (double)o.z));
         }
         return r;
     }
