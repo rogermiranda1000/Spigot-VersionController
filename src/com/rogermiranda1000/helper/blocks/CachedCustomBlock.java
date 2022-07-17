@@ -82,13 +82,12 @@ public abstract class CachedCustomBlock<T> extends CustomBlock<T> {
      * Get all the placed blocks of this type
      * @param blockConsumer Function to execute for each block
      */
-    // TODO why it doesn't work?
-    /*@Override
+    @Override
     synchronized public void getAllBlocks(final Consumer<CustomBlocksEntry<T>> blockConsumer) {
         for (Map.Entry<T,List<Location>> e : this.cache.entrySet()) {
             for (Location loc : e.getValue()) blockConsumer.accept(new CustomBlocksEntry<>(e.getKey(), loc));
         }
-    }*/
+    }
 
     /**
      * Get all the locations by value.
