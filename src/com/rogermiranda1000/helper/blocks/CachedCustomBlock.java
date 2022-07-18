@@ -14,7 +14,7 @@ import java.util.function.Consumer;
  * CustomBlock with a HashMap to save the T
  * Solves some O(n) problems that CustomBlock has
  * @param <T>   The block information to save
- *              Note: T must have implemented a valid 'hash' function
+ *              Note: T must have implemented a valid 'equals' and 'hash' functions
  */
 public abstract class CachedCustomBlock<T> extends CustomBlock<T> {
     private HashMap<T, List<Location>> cache;
@@ -79,16 +79,13 @@ public abstract class CachedCustomBlock<T> extends CustomBlock<T> {
         });
     }
 
-    /**
-     * Get all the placed blocks of this type
-     * @param blockConsumer Function to execute for each block
-     */
-    @Override
+    // getAllBlocks is called after a restart, and due to that restart (I think) the Locations are removed, so we need to query from the other object (inside the father)
+    /*@Override
     synchronized public void getAllBlocks(final Consumer<CustomBlocksEntry<T>> blockConsumer) {
         for (Map.Entry<T,List<Location>> e : this.cache.entrySet()) {
             for (Location loc : e.getValue()) blockConsumer.accept(new CustomBlocksEntry<>(e.getKey(), loc));
         }
-    }
+    }*/
 
     /**
      * Get all the locations by value.
