@@ -129,20 +129,19 @@ public abstract class CustomBlock<T> implements Listener {
     public void load() throws IOException {
         if (!this.willSave()) return;
 
-        CustomBlocksEntry<T> []blocks;
         try {
             StringBuilder sb = new StringBuilder();
             Scanner scanner = new Scanner(this.getCustomBlockFile());
             while (scanner.hasNextLine()) sb.append(scanner.nextLine());
             scanner.close();
 
-            blocks = BasicBlock.getEntries(this.gson.fromJson(sb.toString(), BasicBlock[].class), this.storeFunctions.loadName());
+            CustomBlocksEntry<T> []blocks = BasicBlock.getEntries(this.gson.fromJson(sb.toString(), BasicBlock[].class), this.storeFunctions.loadName());
+            for (CustomBlocksEntry<T> e : blocks) this.placeBlockArtificially(e);
         } catch (JsonSyntaxException ex) {
             throw new IOException(ex.getMessage());
         } catch (FileNotFoundException ignore) {
             return; // no file, no blocks :)
         }
-        for (CustomBlocksEntry<T> e : blocks) this.placeBlockArtificially(e);
     }
 
     public void save() throws IOException {

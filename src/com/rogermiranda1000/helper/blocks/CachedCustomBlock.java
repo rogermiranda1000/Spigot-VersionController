@@ -53,7 +53,7 @@ public abstract class CachedCustomBlock<T> extends CustomBlock<T> {
      * Useful while using preserveObjects
      */
     synchronized public void addObject(T obj) {
-        this.cache.put(obj, new ArrayList<>());
+        if (!this.cache.containsKey(obj)) this.cache.put(obj, new ArrayList<>());
     }
 
     /**
@@ -79,13 +79,12 @@ public abstract class CachedCustomBlock<T> extends CustomBlock<T> {
         });
     }
 
-    // getAllBlocks is called after a restart, and due to that restart (I think) the Locations are removed, so we need to query from the other object (inside the father)
-    /*@Override
+    @Override
     synchronized public void getAllBlocks(final Consumer<CustomBlocksEntry<T>> blockConsumer) {
         for (Map.Entry<T,List<Location>> e : this.cache.entrySet()) {
             for (Location loc : e.getValue()) blockConsumer.accept(new CustomBlocksEntry<>(e.getKey(), loc));
         }
-    }*/
+    }
 
     /**
      * Get all the locations by value.
