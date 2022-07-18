@@ -13,7 +13,8 @@ import java.util.function.Consumer;
 /**
  * CustomBlock with a HashMap to save the T
  * Solves some O(n) problems that CustomBlock has
- * @param <T> The block information to save
+ * @param <T>   The block information to save
+ *              Note: T must have implemented a valid 'equals' and 'hash' functions
  */
 public abstract class CachedCustomBlock<T> extends CustomBlock<T> {
     private HashMap<T, List<Location>> cache;
@@ -52,7 +53,7 @@ public abstract class CachedCustomBlock<T> extends CustomBlock<T> {
      * Useful while using preserveObjects
      */
     synchronized public void addObject(T obj) {
-        this.cache.put(obj, new ArrayList<>());
+        if (!this.cache.containsKey(obj)) this.cache.put(obj, new ArrayList<>());
     }
 
     /**
@@ -78,10 +79,6 @@ public abstract class CachedCustomBlock<T> extends CustomBlock<T> {
         });
     }
 
-    /**
-     * Get all the placed blocks of this type
-     * @param blockConsumer Function to execute for each block
-     */
     @Override
     synchronized public void getAllBlocks(final Consumer<CustomBlocksEntry<T>> blockConsumer) {
         for (Map.Entry<T,List<Location>> e : this.cache.entrySet()) {
@@ -92,7 +89,6 @@ public abstract class CachedCustomBlock<T> extends CustomBlock<T> {
     /**
      * Get all the locations by value.
      * O(n); not recommended using
-     * Note: T must have implemented a valid 'equals' function
      * @param val           Value
      * @param blockConsumer Function to call for each value found
      */
@@ -103,6 +99,11 @@ public abstract class CachedCustomBlock<T> extends CustomBlock<T> {
         locations.forEach(l -> blockConsumer.accept(new CustomBlocksEntry<>(val, l)));
     }
 
+    /**
+     * Get all the locations by value.
+     * @param val           Value
+     * @return              Values found
+     */
     @Nullable
     synchronized public List<Location> getAllBlocksByValue(@NotNull final T val) {
         return this.cache.get(val);
