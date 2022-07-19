@@ -3,6 +3,7 @@ package com.rogermiranda1000.helper.blocks;
 import com.github.davidmoten.rtreemulti.Entry;
 import com.github.davidmoten.rtreemulti.RTree;
 import com.github.davidmoten.rtreemulti.geometry.Point;
+import com.github.davidmoten.rtreemulti.geometry.Rectangle;
 import com.github.davidmoten.rtreemulti.geometry.internal.PointDouble;
 import com.github.davidmoten.rtreemulti.internal.EntryDefault;
 import com.google.gson.Gson;
@@ -13,6 +14,7 @@ import com.rogermiranda1000.versioncontroller.VersionController;
 import com.rogermiranda1000.versioncontroller.blocks.BlockType;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.craftbukkit.libs.jline.internal.Nullable;
 import org.bukkit.event.EventHandler;
@@ -183,6 +185,28 @@ public abstract class CustomBlock<T> implements Listener {
     }
 
     // TODO onUse, onStep
+
+    /**
+     * Lacking some coordinates, locate all the blocks in that area
+     */
+    public void getBlocksLackingCoordinate(@Nullable World world, @Nullable Integer x, @Nullable Integer y, @Nullable Integer z, final Consumer<CustomBlocksEntry<T>> blockConsumer) {
+        double w1_min = -Double.MAX_VALUE, w1_max = Double.MAX_VALUE,
+                w2_min = -Double.MAX_VALUE, w2_max = Double.MAX_VALUE,
+                x_min = -Double.MAX_VALUE, x_max = Double.MAX_VALUE,
+                y_min = -Double.MAX_VALUE, y_max = Double.MAX_VALUE,
+                z_min = -Double.MAX_VALUE, z_max = Double.MAX_VALUE;
+
+        if (world != null) {
+            w1_min = w1_max = Double.longBitsToDouble(world.getUID().getMostSignificantBits());
+            w2_min = w2_max = Double.longBitsToDouble(world.getUID().getLeastSignificantBits());
+        }
+        if (x != null) x_min = x_max = x;
+        if (y != null) y_min = y_max = y;
+        if (z != null) z_min = z_max = z;
+
+        this.blocks.search(Rectangle.create(w1_min, w2_min, x_min, y_min, z_min,
+                w1_max, w2_max, x_max, y_max, z_max)).forEach(e -> blockConsumer.accept(new CustomBlocksEntry<T>(e.value(), CustomBlock.getLocation(e.geometry()))));
+    }
 
     synchronized public void placeBlockArtificially(T add, Location loc) {
         this.blocks = this.blocks.add(add, CustomBlock.getPoint(loc));
