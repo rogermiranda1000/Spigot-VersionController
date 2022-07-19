@@ -20,7 +20,7 @@ public class Ignored {
     public Ignored() { }
 
     private static Ignored instance = null;
-    protected static Ignored get() {
+    public static Ignored get() {
         if (Ignored.instance == null) Ignored.instance = new Ignored();
         return Ignored.instance;
     }
