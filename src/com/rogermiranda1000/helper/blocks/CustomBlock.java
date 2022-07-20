@@ -250,8 +250,13 @@ public abstract class CustomBlock<T> implements Listener {
      * Get all the placed blocks of this type
      * @param blockConsumer Function to execute for each block
      */
-    synchronized public void getAllBlocks(final Consumer<CustomBlocksEntry<T>> blockConsumer) {
-        this.blocks.entries().forEach(e -> blockConsumer.accept(new CustomBlocksEntry<>(e.value(), CustomBlock.getLocation(e.geometry()))));
+    public void getAllBlocks(final Consumer<CustomBlocksEntry<T>> blockConsumer) {
+        List<CustomBlocksEntry<T>> r = new ArrayList<>();
+        synchronized (this) {
+            this.blocks.entries().forEach(e -> r.add(new CustomBlocksEntry<>(e.value(), CustomBlock.getLocation(e.geometry()))));
+        }
+
+        for (CustomBlocksEntry<T> e : r) blockConsumer.accept(e);
     }
 
     synchronized public int getNumBlocks() {
@@ -265,7 +270,7 @@ public abstract class CustomBlock<T> implements Listener {
      * @param val           Value
      * @param blockConsumer Function to call for each value found
      */
-    synchronized public void getAllBlocksByValue(@NotNull final T val, final Consumer<CustomBlocksEntry<T>> blockConsumer) {
+    public void getAllBlocksByValue(@NotNull final T val, final Consumer<CustomBlocksEntry<T>> blockConsumer) {
         this.getAllBlocks((e) -> {
             if (val.equals(e.getKey())) blockConsumer.accept(e);
         });
@@ -276,7 +281,7 @@ public abstract class CustomBlock<T> implements Listener {
      * O(n); not recommended using
      * Note: T must have implemented a valid 'equals' function
      */
-    synchronized public Set<T> getAllValues() {
+    public Set<T> getAllValues() {
         final Set<T> r = new HashSet<>();
         this.getAllBlocks(e -> r.add(e.getKey()));
         return r;

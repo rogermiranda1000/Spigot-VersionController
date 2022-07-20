@@ -67,7 +67,6 @@ public abstract class CachedCustomBlock<T> extends CustomBlock<T> {
     public void load() throws IOException {
         super.load();
 
-        // synchronized by father
         super.getAllBlocks(e -> {
             List<Location> s = this.cache.get(e.getKey());
             if (s == null) {
