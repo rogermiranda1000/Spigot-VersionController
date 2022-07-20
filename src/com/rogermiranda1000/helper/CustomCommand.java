@@ -1,6 +1,7 @@
 package com.rogermiranda1000.helper;
 
 import org.apache.commons.lang.StringUtils;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.craftbukkit.libs.jline.internal.Nullable;
 import org.bukkit.entity.Player;
@@ -127,7 +128,12 @@ public class CustomCommand {
         }
         else {
             // special text ("[something]")
-            searchSpecialText(r, splittedCmd, this.partialUsage, x);
+            if (this.partialUsage[x].equals("[player]")) {
+                for (Player p : Bukkit.getOnlinePlayers()) {
+                    if (CustomCommand.partiallyMatches(splittedCmd[x], p.getName())) r.add(p.getName());
+                }
+            }
+            else searchSpecialText(r, splittedCmd, this.partialUsage, x);
             return r;
         }
     }
