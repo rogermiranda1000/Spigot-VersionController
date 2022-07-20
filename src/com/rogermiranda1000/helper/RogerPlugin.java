@@ -24,7 +24,7 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor 
             errorPrefix = ChatColor.GOLD.toString() + ChatColor.BOLD + "[" + this.getName() + "] " + ChatColor.RED;
 
     private final Listener []listeners;
-    private final CustomCommand []commands;
+    private CustomCommand []commands;
     private final ArrayList<CustomBlock<?>> customBlocks;
 
     private boolean isRunning;
@@ -40,6 +40,10 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor 
         this.isRunning = false;
         this.commands = commands;
         this.listeners = listeners; // Listener... is the same than Listener[]
+    }
+
+    public RogerPlugin(Listener... listeners) {
+        this(new CustomCommand[]{}, listeners);
     }
 
     /**
@@ -99,6 +103,13 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor 
 
     public CustomCommand []getCommands() {
         return this.commands;
+    }
+
+    /**
+     * @pre Before onEnable
+     */
+    public void setCommands(CustomCommand []commands) {
+        this.commands = commands;
     }
 
     /**

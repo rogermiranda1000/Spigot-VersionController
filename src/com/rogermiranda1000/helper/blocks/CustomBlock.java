@@ -3,16 +3,20 @@ package com.rogermiranda1000.helper.blocks;
 import com.github.davidmoten.rtreemulti.Entry;
 import com.github.davidmoten.rtreemulti.RTree;
 import com.github.davidmoten.rtreemulti.geometry.Point;
+import com.github.davidmoten.rtreemulti.geometry.Rectangle;
 import com.github.davidmoten.rtreemulti.geometry.internal.PointDouble;
 import com.github.davidmoten.rtreemulti.internal.EntryDefault;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import com.rogermiranda1000.helper.RogerPlugin;
+import com.rogermiranda1000.helper.blocks.file.BasicBlock;
+import com.rogermiranda1000.helper.blocks.file.BasicLocation;
 import com.rogermiranda1000.versioncontroller.VersionController;
 import com.rogermiranda1000.versioncontroller.blocks.BlockType;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.craftbukkit.libs.jline.internal.Nullable;
 import org.bukkit.event.EventHandler;
@@ -27,8 +31,10 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.lang.reflect.ParameterizedType;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * A block with special meaning
@@ -78,6 +84,20 @@ public abstract class CustomBlock<T> implements Listener {
         this.onEventSuceedRemove = onEventSuceedRemove;
 
         this.removeAllBlocksArtificially();
+    }
+
+    public <O> CustomBlock(RogerPlugin plugin, String id, CustomBlockComparer isTheSameCustomBlock, boolean overrideProtections, boolean onEventSuceedRemove, final @Nullable ComplexStoreConversion<T,O> storeFunctions) {
+        this(plugin, id, isTheSameCustomBlock, overrideProtections, onEventSuceedRemove, new StoreConversion<T>(){
+            private final Gson gson = new Gson();
+
+            public Function<T,String> storeName() {
+                return in->this.gson.toJson((O) storeFunctions.storeName().apply((T) in));
+            }
+
+            public Function<String,T> loadName() {
+                return in->storeFunctions.loadName().apply(this.gson.fromJson(in, storeFunctions.getOutputClass()));
+            }
+        });
     }
 
     /**
@@ -184,6 +204,28 @@ public abstract class CustomBlock<T> implements Listener {
 
     // TODO onUse, onStep
 
+    /**
+     * Lacking some coordinates, locate all the blocks in that area
+     */
+    public void getBlocksLackingCoordinate(@Nullable World world, @Nullable Integer x, @Nullable Integer y, @Nullable Integer z, final Consumer<CustomBlocksEntry<T>> blockConsumer) {
+        double w1_min = -Double.MAX_VALUE, w1_max = Double.MAX_VALUE,
+                w2_min = -Double.MAX_VALUE, w2_max = Double.MAX_VALUE,
+                x_min = -Double.MAX_VALUE, x_max = Double.MAX_VALUE,
+                y_min = -Double.MAX_VALUE, y_max = Double.MAX_VALUE,
+                z_min = -Double.MAX_VALUE, z_max = Double.MAX_VALUE;
+
+        if (world != null) {
+            w1_min = w1_max = Double.longBitsToDouble(world.getUID().getMostSignificantBits());
+            w2_min = w2_max = Double.longBitsToDouble(world.getUID().getLeastSignificantBits());
+        }
+        if (x != null) x_min = x_max = x;
+        if (y != null) y_min = y_max = y;
+        if (z != null) z_min = z_max = z;
+
+        this.blocks.search(Rectangle.create(w1_min, w2_min, x_min, y_min, z_min,
+                w1_max, w2_max, x_max, y_max, z_max)).forEach(e -> blockConsumer.accept(new CustomBlocksEntry<T>(e.value(), CustomBlock.getLocation(e.geometry()))));
+    }
+
     synchronized public void placeBlockArtificially(T add, Location loc) {
         this.blocks = this.blocks.add(add, CustomBlock.getPoint(loc));
     }
@@ -208,8 +250,13 @@ public abstract class CustomBlock<T> implements Listener {
      * Get all the placed blocks of this type
      * @param blockConsumer Function to execute for each block
      */
-    synchronized public void getAllBlocks(final Consumer<CustomBlocksEntry<T>> blockConsumer) {
-        this.blocks.entries().forEach(e -> blockConsumer.accept(new CustomBlocksEntry<>(e.value(), CustomBlock.getLocation(e.geometry()))));
+    public void getAllBlocks(final Consumer<CustomBlocksEntry<T>> blockConsumer) {
+        List<CustomBlocksEntry<T>> r = new ArrayList<>();
+        synchronized (this) {
+            this.blocks.entries().forEach(e -> r.add(new CustomBlocksEntry<>(e.value(), CustomBlock.getLocation(e.geometry()))));
+        }
+
+        for (CustomBlocksEntry<T> e : r) blockConsumer.accept(e);
     }
 
     synchronized public int getNumBlocks() {
@@ -223,7 +270,7 @@ public abstract class CustomBlock<T> implements Listener {
      * @param val           Value
      * @param blockConsumer Function to call for each value found
      */
-    synchronized public void getAllBlocksByValue(@NotNull final T val, final Consumer<CustomBlocksEntry<T>> blockConsumer) {
+    public void getAllBlocksByValue(@NotNull final T val, final Consumer<CustomBlocksEntry<T>> blockConsumer) {
         this.getAllBlocks((e) -> {
             if (val.equals(e.getKey())) blockConsumer.accept(e);
         });
@@ -234,7 +281,7 @@ public abstract class CustomBlock<T> implements Listener {
      * O(n); not recommended using
      * Note: T must have implemented a valid 'equals' function
      */
-    synchronized public Set<T> getAllValues() {
+    public Set<T> getAllValues() {
         final Set<T> r = new HashSet<>();
         this.getAllBlocks(e -> r.add(e.getKey()));
         return r;

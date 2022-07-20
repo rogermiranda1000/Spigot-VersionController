@@ -4,6 +4,7 @@
     <root id="archive" name="VersionController.jar">
       <element id="module-output" name="VersionController" />
       <element id="extracted-dir" path="$MAVEN_REPOSITORY$/com/github/davidmoten/guava-mini/0.1.4/guava-mini-0.1.4.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/com/github/davidmoten/rtree-multi/0.1-RC1/rtree-multi-0.1-RC1.jar" path-in-jar="/" />
     </root>
   </artifact>
 </component>

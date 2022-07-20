@@ -1,5 +1,6 @@
-package com.rogermiranda1000.helper.blocks;
+package com.rogermiranda1000.helper.blocks.file;
 
+import com.rogermiranda1000.helper.blocks.CustomBlocksEntry;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +26,7 @@ public class BasicBlock {
     /**
      * @throws InvalidParameterException loader returned null
      */
-    public static <T> CustomBlocksEntry<T> []getEntries(@NotNull BasicBlock []basicBlocks, @NotNull Function<String,T> loader) throws InvalidParameterException {
+    public static <T> CustomBlocksEntry<T>[]getEntries(@NotNull BasicBlock []basicBlocks, @NotNull Function<String,T> loader) throws InvalidParameterException {
         @SuppressWarnings("unchecked")
         CustomBlocksEntry<T>[] r = new CustomBlocksEntry[basicBlocks.length];
         for (int i = 0; i < r.length; i++) {
