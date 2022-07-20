@@ -10,6 +10,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import com.rogermiranda1000.helper.RogerPlugin;
+import com.rogermiranda1000.helper.blocks.file.BasicBlock;
 import com.rogermiranda1000.versioncontroller.VersionController;
 import com.rogermiranda1000.versioncontroller.blocks.BlockType;
 import org.bukkit.Bukkit;
