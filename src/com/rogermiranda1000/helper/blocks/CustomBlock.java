@@ -11,6 +11,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import com.rogermiranda1000.helper.RogerPlugin;
 import com.rogermiranda1000.helper.blocks.file.BasicBlock;
+import com.rogermiranda1000.helper.blocks.file.BasicLocation;
 import com.rogermiranda1000.versioncontroller.VersionController;
 import com.rogermiranda1000.versioncontroller.blocks.BlockType;
 import org.bukkit.Bukkit;
@@ -30,8 +31,10 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.lang.reflect.ParameterizedType;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * A block with special meaning
@@ -81,6 +84,20 @@ public abstract class CustomBlock<T> implements Listener {
         this.onEventSuceedRemove = onEventSuceedRemove;
 
         this.removeAllBlocksArtificially();
+    }
+
+    public <O> CustomBlock(RogerPlugin plugin, String id, CustomBlockComparer isTheSameCustomBlock, boolean overrideProtections, boolean onEventSuceedRemove, final @Nullable ComplexStoreConversion<T,O> storeFunctions) {
+        this(plugin, id, isTheSameCustomBlock, overrideProtections, onEventSuceedRemove, new StoreConversion<T>(){
+            private final Gson gson = new Gson();
+
+            public Function<T,String> storeName() {
+                return in->this.gson.toJson((O) storeFunctions.storeName().apply((T) in));
+            }
+
+            public Function<String,T> loadName() {
+                return in->storeFunctions.loadName().apply(this.gson.fromJson(in, storeFunctions.getOutputClass()));
+            }
+        });
     }
 
     /**
