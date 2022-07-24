@@ -77,10 +77,10 @@ public class VersionController extends ItemManager implements BlockManager, Part
      */
     private static boolean getMCPaper() {
         try {
-            Class.forName("com.destroystokyo.paper.ParticleBuilder"); // a package from paper
-            return true;
+            Class.forName("org.spigotmc.CustomTimingsHandler"); // a package from SPIGOT (not paper)
+            return false;
         } catch (ClassNotFoundException ignored) { }
-        return false;
+        return true;
     }
 
     public static VersionController get() {
