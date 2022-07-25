@@ -49,4 +49,15 @@ public class ItemPost9 extends ItemManager {
             item.setItemMeta(meta);
         }
     }
+
+    @Override
+    public ItemStack setUnbreakable(ItemStack item) {
+        if (VersionController.version.compareTo(Version.MC_1_11) < 0) return new ItemPre9().setUnbreakable(item);
+        else {
+            ItemMeta meta = item.getItemMeta();
+            meta.setUnbreakable(true);
+            item.setItemMeta(meta);
+            return item;
+        }
+    }
 }

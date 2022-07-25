@@ -135,9 +135,20 @@ public class VersionController extends ItemManager implements BlockManager, Part
         return VersionController.itemManager.getDurability(item);
     }
 
+    /**
+     * /!\\ item's meta changes /!\\
+     */
     @Override
     public void setDurability(ItemStack item, int damage) throws IllegalArgumentException {
         VersionController.itemManager.setDurability(item, damage);
+    }
+
+    /**
+     * /!\\ item's meta changes /!\\
+     */
+    @Override
+    public ItemStack setUnbreakable(ItemStack item) {
+        return VersionController.itemManager.setUnbreakable(item);
     }
 
     @Override

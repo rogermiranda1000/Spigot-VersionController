@@ -7,6 +7,7 @@ import org.bukkit.inventory.PlayerInventory;
 import javax.annotation.Nullable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.function.Function;
 
 /**
  * ItemManager for version < 1.9
@@ -26,6 +27,9 @@ public class ItemPre9 extends ItemManager {
 
     @Nullable
     private static final Method setDurabilityMethod = ItemPre9.setDurabilityMethod();
+
+    @Nullable
+    private static final Function<ItemStack,ItemStack> setUnbreakable = ItemPre9.setUnbreakable();
 
     @Nullable
     private static Method getDurabilityMethod() {
@@ -115,7 +119,7 @@ public class ItemPre9 extends ItemManager {
     @Override
     public int getDurability(ItemStack item) throws IllegalArgumentException {
         try {
-            return (int)ItemPre9.setDurabilityMethod.invoke(item);
+            return (int)ItemPre9.getDurabilityMethod.invoke(item);
         } catch (InvocationTargetException | IllegalAccessException | NullPointerException ex) {
             return 0;
         }
@@ -130,5 +134,43 @@ public class ItemPre9 extends ItemManager {
         try {
             ItemPre9.setDurabilityMethod.invoke(item, (short)damage);
         } catch (InvocationTargetException | IllegalAccessException | NullPointerException ignore) { }
+    }
+
+    /**
+     * Prior to 1.11
+     */
+    @Override
+    public ItemStack setUnbreakable(ItemStack item) {
+        if (ItemPre9.setUnbreakable == null) return null;
+        return ItemPre9.setUnbreakable.apply(item);
+    }
+
+    @Nullable
+    private static Function<ItemStack,ItemStack> setUnbreakable() {
+        try {
+            Class<?> nmsItemStackFactoryClass = Class.forName(VersionController.bukkitPackage + ".inventory.CraftItemStack"),
+                    nmsItemStackClass = Class.forName(VersionController.nmsPackage + ".ItemStack"),
+                    nbtTagClass = Class.forName(VersionController.nmsPackage + ".NBTTagCompound");
+            final Method getNMSItemStack = nmsItemStackFactoryClass.getMethod("asNMSCopy", ItemStack.class),
+                    nsmItemStackToSpigot = nmsItemStackFactoryClass.getMethod("asCraftMirror", nmsItemStackClass),
+                    setTagNSMItemStack = nmsItemStackClass.getMethod("setTag", nbtTagClass);
+
+            final Object tag = nbtTagClass.newInstance();
+            nbtTagClass.getMethod("setBoolean", String.class, boolean.class)
+                            .invoke(tag, "Unbreakable", true);
+
+            return in -> {
+                try {
+                    Object stack = getNMSItemStack.invoke(null, in);
+                    setTagNSMItemStack.invoke(stack, tag); //Apply the tag to the item
+                    return (ItemStack) nsmItemStackToSpigot.invoke(null, stack);
+                } catch (IllegalAccessException | InvocationTargetException ignore) {
+                    return null;
+                }
+            };
+        } catch (ClassNotFoundException | NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException ex) {
+            ex.printStackTrace();
+            return null;
+        }
     }
 }
