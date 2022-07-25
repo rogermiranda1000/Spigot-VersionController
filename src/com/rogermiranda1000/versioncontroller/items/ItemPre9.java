@@ -119,7 +119,7 @@ public class ItemPre9 extends ItemManager {
     @Override
     public int getDurability(ItemStack item) throws IllegalArgumentException {
         try {
-            return (int)ItemPre9.getDurabilityMethod.invoke(item);
+            return ((Short)ItemPre9.getDurabilityMethod.invoke(item)).intValue();
         } catch (InvocationTargetException | IllegalAccessException | NullPointerException ex) {
             return 0;
         }
