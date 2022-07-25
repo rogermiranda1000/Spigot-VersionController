@@ -19,7 +19,33 @@ public class ItemPre9 extends ItemManager {
     private static final Method setItemInHandMethod = ItemPre9.setItemInHandMethod();
 
     @Nullable
-    private static final Method getItemByIdMethod = ItemPre9.getGetItemByIdMethod();
+    private static final Method getItemByIdMethod = ItemPre9.getItemByIdMethod();
+
+    @Nullable
+    private static final Method getDurabilityMethod = ItemPre9.getDurabilityMethod();
+
+    @Nullable
+    private static final Method setDurabilityMethod = ItemPre9.setDurabilityMethod();
+
+    @Nullable
+    private static Method getDurabilityMethod() {
+        try {
+            return ItemStack.class.getMethod("getDurability");
+        } catch (NoSuchMethodException ex) {
+            ex.printStackTrace();
+            return null;
+        }
+    }
+
+    @Nullable
+    private static Method setDurabilityMethod() {
+        try {
+            return ItemStack.class.getMethod("setDurability", short.class);
+        } catch (NoSuchMethodException ex) {
+            ex.printStackTrace();
+            return null;
+        }
+    }
 
     @Nullable
     private static Method getItemInHandMethod() {
@@ -41,7 +67,7 @@ public class ItemPre9 extends ItemManager {
         }
     }
 
-    private static Method getGetItemByIdMethod() {
+    private static Method getItemByIdMethod() {
         try {
             Class<?> nmsItemClass = Class.forName(VersionController.nmsPackage + ".Item");
             return nmsItemClass.getMethod("getById", int.class);
@@ -84,5 +110,25 @@ public class ItemPre9 extends ItemManager {
         } catch (InvocationTargetException | IllegalAccessException | NullPointerException ex) {
             return false;
         }
+    }
+
+    @Override
+    public int getDurability(ItemStack item) throws IllegalArgumentException {
+        try {
+            return (int)ItemPre9.setDurabilityMethod.invoke(item);
+        } catch (InvocationTargetException | IllegalAccessException | NullPointerException ex) {
+            return 0;
+        }
+    }
+
+    /**
+     * Prior to 1.13
+     */
+    @SuppressWarnings("ConstantConditions")
+    @Override
+    public void setDurability(ItemStack item, int damage) {
+        try {
+            ItemPre9.setDurabilityMethod.invoke(item, (short)damage);
+        } catch (InvocationTargetException | IllegalAccessException | NullPointerException ignore) { }
     }
 }

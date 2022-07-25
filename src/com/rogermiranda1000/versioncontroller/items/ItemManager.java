@@ -29,6 +29,10 @@ public abstract class ItemManager {
 
     public abstract boolean isItem(ItemStack item);
 
+    public abstract int getDurability(ItemStack item) throws IllegalArgumentException;
+
+    public abstract void setDurability(ItemStack item, int damage) throws IllegalArgumentException;
+
     /**
      * It checks the material, name and enchantments of an item
      * @param i First item

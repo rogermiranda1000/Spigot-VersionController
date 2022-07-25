@@ -131,6 +131,16 @@ public class VersionController extends ItemManager implements BlockManager, Part
     }
 
     @Override
+    public int getDurability(ItemStack item) throws IllegalArgumentException {
+        return VersionController.itemManager.getDurability(item);
+    }
+
+    @Override
+    public void setDurability(ItemStack item, int damage) throws IllegalArgumentException {
+        VersionController.itemManager.setDurability(item, damage);
+    }
+
+    @Override
     public ParticleEntity getParticle(String particle) throws IllegalArgumentException {
         return VersionController.particleManager.getParticle(particle);
     }
