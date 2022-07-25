@@ -36,7 +36,7 @@ public abstract class ItemManager {
      * @return If i == i2
      */
     public boolean sameItem(ItemStack i, ItemStack i2) {
-        if (i == null && i2 == null) return true;
+        /*if (i == null && i2 == null) return true;
         if (i == null || i2 == null) return false;
 
         if (!i2.getType().equals(i.getType())) return false;
@@ -56,7 +56,8 @@ public abstract class ItemManager {
                 m2 = i2.getItemMeta();
         if (m == null && m2 == null) return true;
         if (m == null || m2 == null) return false;
-        return m.getDisplayName().equals(m2.getDisplayName());
+        return m.getDisplayName().equals(m2.getDisplayName());*/
+        return i.isSimilar(i2);
     }
 
     /**
