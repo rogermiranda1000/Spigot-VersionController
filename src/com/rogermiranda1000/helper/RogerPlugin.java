@@ -1,6 +1,7 @@
 package com.rogermiranda1000.helper;
 
 import com.rogermiranda1000.helper.blocks.CustomBlock;
+import com.rogermiranda1000.helper.metrics.Metrics;
 import com.rogermiranda1000.versioncontroller.Version;
 import com.rogermiranda1000.versioncontroller.VersionChecker;
 import com.rogermiranda1000.versioncontroller.VersionController;
@@ -25,20 +26,33 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor 
 
     private final Listener []listeners;
     private CustomCommand []commands;
+    private final Metrics.CustomChart []charts;
     private final ArrayList<CustomBlock<?>> customBlocks;
 
+    @Nullable
+    private Metrics metrics;
     private boolean isRunning;
 
     /**
      * JavaPlugin with some basic functionalities.
-     * /!\\ While overriding onEnable remember to call the super() function /!\\
      * @param commands      All the commands from the plugin. It's important that in the first position you set the 'help' command
      * @param listeners     All the event listeners from the plugin
      */
     public RogerPlugin(CustomCommand []commands, Listener... listeners) {
+        this(commands, new Metrics.CustomChart[]{}, listeners);
+    }
+
+    /**
+     * JavaPlugin with some basic functionalities. Also enables report data
+     * @param commands      All the commands from the plugin. It's important that in the first position you set the 'help' command
+     * @param charts        All the reported data
+     * @param listeners     All the event listeners from the plugin
+     */
+    public RogerPlugin(CustomCommand []commands, Metrics.CustomChart []charts, Listener... listeners) {
         this.customBlocks = new ArrayList<>();
         this.isRunning = false;
         this.commands = commands;
+        this.charts = charts;
         this.listeners = listeners; // Listener... is the same than Listener[]
     }
 
@@ -117,7 +131,14 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor 
      * @return Spigot ID, or NULL if don't want to check updates
      */
     @Nullable
-    abstract public String getPluginID();
+    public String getPluginID() { return null; }
+
+    /**
+     * Get the bStats ID
+     * @return bStats ID, or NULL if don't want to report
+     */
+    @Nullable
+    public Integer getMetricsID() { return null; }
 
     /**
      * Check for updates, starts the listeners (& commands) and loads CustomBlocks
@@ -126,8 +147,12 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor 
     @Override
     public void onEnable() {
         this.isRunning = true;
-
         // TODO any way to save the instance here?
+
+        if (this.getMetricsID() != null) {
+            this.metrics = new Metrics(this, this.getMetricsID());
+            for (Metrics.CustomChart chart : this.charts) this.metrics.addCustomChart(chart);
+        }
 
         Bukkit.getScheduler().runTaskAsynchronously(this,()->{
             try {
