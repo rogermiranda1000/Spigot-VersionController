@@ -29,6 +29,12 @@ public abstract class ItemManager {
 
     public abstract boolean isItem(ItemStack item);
 
+    public abstract int getDurability(ItemStack item) throws IllegalArgumentException;
+
+    public abstract void setDurability(ItemStack item, int damage) throws IllegalArgumentException;
+
+    public abstract ItemStack setUnbreakable(ItemStack item);
+
     /**
      * It checks the material, name and enchantments of an item
      * @param i First item
@@ -36,7 +42,7 @@ public abstract class ItemManager {
      * @return If i == i2
      */
     public boolean sameItem(ItemStack i, ItemStack i2) {
-        if (i == null && i2 == null) return true;
+        /*if (i == null && i2 == null) return true;
         if (i == null || i2 == null) return false;
 
         if (!i2.getType().equals(i.getType())) return false;
@@ -56,7 +62,8 @@ public abstract class ItemManager {
                 m2 = i2.getItemMeta();
         if (m == null && m2 == null) return true;
         if (m == null || m2 == null) return false;
-        return m.getDisplayName().equals(m2.getDisplayName());
+        return m.getDisplayName().equals(m2.getDisplayName());*/
+        return i.isSimilar(i2);
     }
 
     /**

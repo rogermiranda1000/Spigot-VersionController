@@ -77,10 +77,10 @@ public class VersionController extends ItemManager implements BlockManager, Part
      */
     private static boolean getMCPaper() {
         try {
-            Class.forName("com.destroystokyo.paper.ParticleBuilder"); // a package from paper
-            return true;
+            Class.forName("org.spigotmc.CustomTimingsHandler"); // a package from SPIGOT (not paper)
+            return false;
         } catch (ClassNotFoundException ignored) { }
-        return false;
+        return true;
     }
 
     public static VersionController get() {
@@ -128,6 +128,27 @@ public class VersionController extends ItemManager implements BlockManager, Part
     @Override
     public boolean isItem(ItemStack item) {
         return VersionController.itemManager.isItem(item);
+    }
+
+    @Override
+    public int getDurability(ItemStack item) throws IllegalArgumentException {
+        return VersionController.itemManager.getDurability(item);
+    }
+
+    /**
+     * /!\\ item's meta changes /!\\
+     */
+    @Override
+    public void setDurability(ItemStack item, int damage) throws IllegalArgumentException {
+        VersionController.itemManager.setDurability(item, damage);
+    }
+
+    /**
+     * /!\\ item's meta changes /!\\
+     */
+    @Override
+    public ItemStack setUnbreakable(ItemStack item) {
+        return VersionController.itemManager.setUnbreakable(item);
     }
 
     @Override
