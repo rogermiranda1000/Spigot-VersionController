@@ -4,9 +4,7 @@ import com.rogermiranda1000.versioncontroller.blocks.BlockManager;
 import com.rogermiranda1000.versioncontroller.blocks.BlockPost13;
 import com.rogermiranda1000.versioncontroller.blocks.BlockPre13;
 import com.rogermiranda1000.versioncontroller.blocks.BlockType;
-import com.rogermiranda1000.versioncontroller.entities.EntityManager;
-import com.rogermiranda1000.versioncontroller.entities.EntityPaper;
-import com.rogermiranda1000.versioncontroller.entities.EntitySpigot;
+import com.rogermiranda1000.versioncontroller.entities.*;
 import com.rogermiranda1000.versioncontroller.items.ItemManager;
 import com.rogermiranda1000.versioncontroller.items.ItemPost9;
 import com.rogermiranda1000.versioncontroller.items.ItemPre9;
@@ -24,7 +22,6 @@ import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 
-import java.net.URISyntaxException;
 import java.util.Properties;
 
 /**
@@ -41,7 +38,8 @@ public class VersionController extends ItemManager implements BlockManager, Part
     private static final BlockManager blockManager = (VersionController.version.compareTo(Version.MC_1_13) < 0) ? new BlockPre13() : new BlockPost13();
     private static final ItemManager itemManager = (VersionController.version.compareTo(Version.MC_1_9) < 0) ? new ItemPre9() : new ItemPost9();
     private static final ParticleManager particleManager = (VersionController.version.compareTo(Version.MC_1_9) < 0) ? new ParticlePre9() : new ParticlePost9();
-    private static final EntityManager entityManager = (VersionController.isPaper) ? new EntityPaper() : new EntitySpigot();
+    private static final EntityManager entityManager = (VersionController.isPaper) ? new EntityPaper()
+            : ((VersionController.version.compareTo(Version.MC_1_12) < 0) ? new EntitySpigotPre12() : new EntitySpigotPost12());
 
     /**
      * Get the current minecraft version
@@ -164,5 +162,10 @@ public class VersionController extends ItemManager implements BlockManager, Part
     @Override
     public @NotNull Vector getVelocity(PlayerMoveEvent e) {
         return VersionController.entityManager.getVelocity(e);
+    }
+
+    @Override
+    public BoundingBox getBoundingBox(Entity e) {
+        return VersionController.entityManager.getBoundingBox(e);
     }
 }
