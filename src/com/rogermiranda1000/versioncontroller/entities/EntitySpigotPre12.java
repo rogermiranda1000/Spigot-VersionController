@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 
 public class EntitySpigotPre12 implements EntityManager {
     @Override
@@ -81,12 +82,23 @@ public class EntitySpigotPre12 implements EntityManager {
         }
     }
 
+    /**
+     * @param name min/max x/y/z
+     */
     private static Field getBoundingBoxField(String name) {
         try {
             return EntitySpigotPre12.boundingBoxClass.getDeclaredField(name);
-        } catch (NoSuchFieldException e) {
-            e.printStackTrace();
-            return null;
+        } catch (NoSuchFieldException ignored) {
+            try {
+                // maybe it's a/b/c/d/e/f
+                int var = (int)'a';
+                if (name.startsWith("max")) var += 3;
+                var += (int)name.charAt(3) - 'X';
+                return EntitySpigotPre12.boundingBoxClass.getDeclaredField(Character.toString((char)var));
+            } catch (NoSuchFieldException e) {
+                e.printStackTrace();
+                return null;
+            }
         }
     }
 
