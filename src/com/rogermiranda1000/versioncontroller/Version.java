@@ -61,7 +61,7 @@ public class Version implements Comparable<Version> {
         do {
             tmp = this.version[x] - o.version[x];
             x++;
-        } while (x < this.version.length && tmp == 0);
+        } while (x < this.version.length && x < o.version.length && tmp == 0);
         return tmp;
     }
 
