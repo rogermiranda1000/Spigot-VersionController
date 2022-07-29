@@ -11,4 +11,6 @@ public interface EntityManager {
 
     @NotNull
     Vector getVelocity(PlayerMoveEvent e);
+
+    BoundingBox getBoundingBox(Entity e);
 }
