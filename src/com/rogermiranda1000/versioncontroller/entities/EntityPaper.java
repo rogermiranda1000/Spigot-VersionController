@@ -21,6 +21,6 @@ public class EntityPaper implements EntityManager {
 
     @Override
     public BoundingBox getBoundingBox(Entity e) {
-        return new EntitySpigotPre12().getBoundingBox(e);
+        return new EntitySpigotPre14().getBoundingBox(e);
     }
 }

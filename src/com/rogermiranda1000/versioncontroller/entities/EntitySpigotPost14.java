@@ -5,7 +5,7 @@ import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 
-public class EntitySpigotPost12 implements EntityManager {
+public class EntitySpigotPost14 implements EntityManager {
     @Override
     public @NotNull Vector getVelocity(Entity e) {
         return e.getVelocity();

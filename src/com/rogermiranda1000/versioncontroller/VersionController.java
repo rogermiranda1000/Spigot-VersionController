@@ -39,7 +39,7 @@ public class VersionController extends ItemManager implements BlockManager, Part
     private static final ItemManager itemManager = (VersionController.version.compareTo(Version.MC_1_9) < 0) ? new ItemPre9() : new ItemPost9();
     private static final ParticleManager particleManager = (VersionController.version.compareTo(Version.MC_1_9) < 0) ? new ParticlePre9() : new ParticlePost9();
     private static final EntityManager entityManager = (VersionController.isPaper) ? new EntityPaper()
-            : ((VersionController.version.compareTo(Version.MC_1_12) < 0) ? new EntitySpigotPre12() : new EntitySpigotPost12());
+            : ((VersionController.version.compareTo(Version.MC_1_14) < 0) ? new EntitySpigotPre14() : new EntitySpigotPost14());
 
     /**
      * Get the current minecraft version
