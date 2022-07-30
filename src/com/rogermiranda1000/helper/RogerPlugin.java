@@ -29,6 +29,7 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor 
     private CustomCommand []commands;
     private final Metrics.CustomChart []charts;
     private final ArrayList<CustomBlock<?>> customBlocks;
+    private String noPermissionsMessage;
 
     @Nullable
     private Metrics metrics;
@@ -56,14 +57,13 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor 
         this.charts = charts;
         this.listeners = listeners; // Listener... is the same than Listener[]
 
+        this.noPermissionsMessage = "You don't have the permissions to do that.";
+
         if (this.getSentryDsn() != null) {
             Sentry.init(options -> {
                 options.setDsn(this.getSentryDsn());
-                // Set tracesSampleRate to 1.0 to capture 100% of transactions for performance monitoring.
-                // We recommend adjusting this value in production.
+                // capture 100% of transactions for performance monitoring
                 options.setTracesSampleRate(1.0);
-                // When first trying Sentry it's good to see what the SDK is doing:
-                options.setDebug(true);
             });
         }
     }
@@ -99,6 +99,10 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor 
         }
 
         return this;
+    }
+
+    public void setNoPermissionsMessage(String msg) {
+        this.noPermissionsMessage = msg;
     }
 
     /**
@@ -155,6 +159,14 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor 
     @Nullable
     public String getSentryDsn() { return null; }
 
+    public void reportException(Exception ex) {
+        Sentry.captureException(ex);
+    }
+
+    public void reportException(String err) {
+        Sentry.captureMessage(err);
+    }
+
     /**
      * Check for updates, starts the listeners (& commands) and loads CustomBlocks
      */
@@ -205,7 +217,7 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor 
 
             this.postOnEnable();
         } catch (Exception ex) {
-            Sentry.captureException(ex);
+            this.reportException(ex);
         }
     }
 
@@ -228,7 +240,7 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor 
 
             this.postOnDisable();
         } catch (Exception ex) {
-            Sentry.captureException(ex);
+            this.reportException(ex);
         }
     }
 
@@ -252,7 +264,7 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor 
                         continue;
 
                     case NO_PERMISSIONS:
-                        sender.sendMessage(this.errorPrefix + "You don't have the permissions to do that.");
+                        sender.sendMessage(this.errorPrefix + this.noPermissionsMessage);
                         break;
                     case MATCH:
                         command.notifier.onCommand(sender, args);
@@ -261,7 +273,7 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor 
                         sender.sendMessage("Don't use this command in console.");
                         break;
                     case INVALID_LENGTH:
-                        sender.sendMessage(this.errorPrefix +"Unknown command. Use " + ChatColor.GOLD + "/mineit ?");
+                        sender.sendMessage(this.errorPrefix +"Unknown command. Use " + ChatColor.GOLD + "/" + this.getName().toLowerCase() + " ?");
                         break;
                     default:
                         this.printConsoleErrorMessage("Unknown response to command");
@@ -274,7 +286,7 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor 
             this.commands[0].notifier.onCommand(sender, new String[]{}); // '?' command
             return true;
         } catch (Exception ex) {
-            Sentry.captureException(ex);
+            this.reportException(ex);
             return false;
         }
     }
