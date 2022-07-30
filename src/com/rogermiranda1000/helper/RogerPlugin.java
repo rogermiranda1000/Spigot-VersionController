@@ -159,13 +159,13 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
     public String getSentryDsn() { return null; }
 
     @Override
-    public void reportException(Exception ex) {
+    public void reportException(Throwable ex) {
         this.hub.captureException(ex);
         ex.printStackTrace();
     }
 
     @Override
-    public void reportRepeatedException(Exception ex) {
+    public void reportRepeatedException(Throwable ex) {
         // TODO check for repeated
         this.reportException(ex);
     }
@@ -205,14 +205,15 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
 
                 options.setAttachServerName(false); // give the user some privacy
 
-                options.setTag("plugin-version", this.getDescription().getVersion());
+                options.setRelease(this.getDescription().getVersion());
+
                 options.setTag("server-version", VersionController.version.toString());
                 options.setTag("spigot", Boolean.toString(!VersionController.isPaper));
                 // TODO attach config file
                 // TODO add plugins using
 
-                // TODO DEBUG ONLY
-                options.setDebug(true);
+                /*options.setDebug(true);
+                options.setDiagnosticLevel(SentryLevel.ERROR);*/
 
                 this.hub = new Hub(options);
             }
@@ -250,7 +251,7 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
                             System.err.println("Error while overriding " + lis.getClass().getName());
                             throw ex;
                         }
-                    } catch (Exception ex) {
+                    } catch (Throwable ex) {
                         this.reportRepeatedException(ex);
                     }
                 });
@@ -272,7 +273,7 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
             }
 
             this.postOnEnable();
-        } catch (Exception ex) {
+        } catch (Throwable ex) {
             this.reportException(ex);
         }
     }
@@ -295,7 +296,7 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
             }
 
             this.postOnDisable();
-        } catch (Exception ex) {
+        } catch (Throwable ex) {
             this.reportException(ex);
         }
 
@@ -344,7 +345,7 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
             sender.sendMessage(this.errorPrefix + this.unknownMessage);
             this.commands[0].notifier.onCommand(sender, new String[]{}); // '?' command
             return true;
-        } catch (Exception ex) {
+        } catch (Throwable ex) {
             this.reportException(ex);
             return false;
         }

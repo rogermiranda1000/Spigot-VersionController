@@ -17,12 +17,12 @@ import java.util.function.Function;
 public class SentryScheduler implements BukkitScheduler {
     private final Function<Runnable,Runnable> secureRun;
 
-    private SentryScheduler(Reporter reporter) {
+    public SentryScheduler(Reporter reporter) {
         this.secureRun = ((r)->{
             return ()->{
                 try {
                     r.run();
-                } catch (Exception ex) {
+                } catch (Throwable ex) {
                     reporter.reportRepeatedException(ex);
                 }
             };
