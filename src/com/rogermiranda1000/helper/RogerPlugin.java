@@ -161,12 +161,14 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
     @Override
     public void reportException(Throwable ex) {
         this.hub.captureException(ex);
+        this.printConsoleErrorMessage("Error captured:");
         ex.printStackTrace();
     }
 
+    private int reports = 0;
     @Override
     public void reportRepeatedException(Throwable ex) {
-        // TODO check for repeated
+        if (++reports > 30) return; // 30 reports per reload; otherwise ignore
         this.reportException(ex);
     }
 
@@ -184,6 +186,7 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
         userFeedback.setComments(message);
         if (contact != null) userFeedback.setEmail(contact);
         this.hub.captureUserFeedback(userFeedback);
+        getLogger().info("Thanks for your feedback!");
     }
 
     /**
@@ -238,7 +241,7 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
             });
 
             // get all the events
-            List<Listener> listeners = Arrays.asList(this.listeners);
+            List<Listener> listeners = new ArrayList<>(Arrays.asList(this.listeners));
             for (CustomBlock<?> cb : this.customBlocks) listeners.addAll(cb.register());
 
             // register the events
