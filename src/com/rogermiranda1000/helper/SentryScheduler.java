@@ -1,6 +1,5 @@
 package com.rogermiranda1000.helper;
 
-import io.sentry.Sentry;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -16,38 +15,34 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class SentryScheduler implements BukkitScheduler {
-    private static SentryScheduler instance = null;
-    private static final Function<Runnable,Runnable> secureRun = ((r)->{
-        return ()->{
-            try {
-                r.run();
-            } catch (Exception ex) {
-                Sentry.captureException(ex);
-                ex.printStackTrace();
-            }
-        };
-    });
+    private final Function<Runnable,Runnable> secureRun;
 
-    private SentryScheduler() {}
-
-    public static SentryScheduler getInstance() {
-        if (SentryScheduler.instance == null) SentryScheduler.instance = new SentryScheduler();
-        return SentryScheduler.instance;
+    private SentryScheduler(Reporter reporter) {
+        this.secureRun = ((r)->{
+            return ()->{
+                try {
+                    r.run();
+                } catch (Exception ex) {
+                    reporter.reportException(ex);
+                    ex.printStackTrace();
+                }
+            };
+        });
     }
 
     @Override
     public int scheduleSyncDelayedTask(@NotNull Plugin var1, @NotNull Runnable var2, long var3) {
-        return Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(var1, SentryScheduler.secureRun.apply(var2), var3);
+        return Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(var1, this.secureRun.apply(var2), var3);
     }
 
     @Override
     public int scheduleSyncDelayedTask(@NotNull Plugin var1, @NotNull Runnable var2) {
-        return Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(var1, SentryScheduler.secureRun.apply(var2));
+        return Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(var1, this.secureRun.apply(var2));
     }
 
     @Override
     public int scheduleSyncRepeatingTask(@NotNull Plugin var1, @NotNull Runnable var2, long var3, long var5) {
-        return Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(var1, SentryScheduler.secureRun.apply(var2), var3, var5);
+        return Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(var1, this.secureRun.apply(var2), var3, var5);
     }
 
     @Override
@@ -91,7 +86,7 @@ public class SentryScheduler implements BukkitScheduler {
     @Override
     @NotNull
     public BukkitTask runTask(@NotNull Plugin var1, @NotNull Runnable var2) throws IllegalArgumentException {
-        return Bukkit.getServer().getScheduler().runTask(var1, SentryScheduler.secureRun.apply(var2));
+        return Bukkit.getServer().getScheduler().runTask(var1, this.secureRun.apply(var2));
     }
 
     @Override
@@ -102,7 +97,7 @@ public class SentryScheduler implements BukkitScheduler {
     @Override
     @NotNull
     public BukkitTask runTaskAsynchronously(@NotNull Plugin var1, @NotNull Runnable var2) throws IllegalArgumentException {
-        return Bukkit.getServer().getScheduler().runTaskAsynchronously(var1, SentryScheduler.secureRun.apply(var2));
+        return Bukkit.getServer().getScheduler().runTaskAsynchronously(var1, this.secureRun.apply(var2));
     }
 
     @Override
@@ -113,7 +108,7 @@ public class SentryScheduler implements BukkitScheduler {
     @Override
     @NotNull
     public BukkitTask runTaskLater(@NotNull Plugin var1, @NotNull Runnable var2, long var3) throws IllegalArgumentException {
-        return Bukkit.getServer().getScheduler().runTaskLater(var1, SentryScheduler.secureRun.apply(var2), var3);
+        return Bukkit.getServer().getScheduler().runTaskLater(var1, this.secureRun.apply(var2), var3);
     }
 
     @Override
@@ -124,7 +119,7 @@ public class SentryScheduler implements BukkitScheduler {
     @Override
     @NotNull
     public BukkitTask runTaskLaterAsynchronously(@NotNull Plugin var1, @NotNull Runnable var2, long var3) throws IllegalArgumentException {
-        return Bukkit.getServer().getScheduler().runTaskLaterAsynchronously(var1, SentryScheduler.secureRun.apply(var2), var3);
+        return Bukkit.getServer().getScheduler().runTaskLaterAsynchronously(var1, this.secureRun.apply(var2), var3);
     }
 
     @Override
@@ -135,7 +130,7 @@ public class SentryScheduler implements BukkitScheduler {
     @Override
     @NotNull
     public BukkitTask runTaskTimer(@NotNull Plugin var1, @NotNull Runnable var2, long var3, long var5) throws IllegalArgumentException {
-        return Bukkit.getServer().getScheduler().runTaskTimer(var1, SentryScheduler.secureRun.apply(var2), var3, var5);
+        return Bukkit.getServer().getScheduler().runTaskTimer(var1, this.secureRun.apply(var2), var3, var5);
     }
 
     @Override
@@ -146,7 +141,7 @@ public class SentryScheduler implements BukkitScheduler {
     @Override
     @NotNull
     public BukkitTask runTaskTimerAsynchronously(@NotNull Plugin var1, @NotNull Runnable var2, long var3, long var5) throws IllegalArgumentException {
-        return Bukkit.getServer().getScheduler().runTaskTimerAsynchronously(var1, SentryScheduler.secureRun.apply(var2), var3, var5);
+        return Bukkit.getServer().getScheduler().runTaskTimerAsynchronously(var1, this.secureRun.apply(var2), var3, var5);
     }
 
     public void runTaskTimerAsynchronously(@NotNull Plugin var1, @NotNull Consumer<BukkitTask> var2, long var3, long var5) throws IllegalArgumentException {

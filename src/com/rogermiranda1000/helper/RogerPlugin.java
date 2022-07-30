@@ -64,23 +64,6 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
         this.listeners = listeners; // Listener... is the same than Listener[]
 
         this.noPermissionsMessage = "You don't have the permissions to do that.";
-
-        if (this.getSentryDsn() != null) {
-            SentryOptions options = new SentryOptions();
-            options.setDsn(this.getSentryDsn());
-            options.setTracesSampleRate(1.0); // capture 100% of transactions for performance monitoring
-
-            options.setTag("plugin-version", this.getDescription().getVersion());
-            options.setTag("server-version", VersionController.version.toString());
-            options.setTag("spigot", Boolean.toString(!VersionController.isPaper));
-            // TODO attach config file
-            // TODO add plugins using
-
-            // TODO DEBUG ONLY
-            options.setDebug(true);
-
-            this.hub = new Hub(options);
-        }
     }
 
     public RogerPlugin(Listener... listeners) {
@@ -206,6 +189,28 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
             this.isRunning = true;
             // TODO any way to save the instance here?
 
+            if (this.getSentryDsn() != null) {
+                SentryOptions options = new SentryOptions();
+                options.setDsn(this.getSentryDsn());
+
+                // capture 100% of transactions for performance monitoring
+                options.setSampleRate(1.0);
+                options.setTracesSampleRate(1.0);
+
+                options.setAttachServerName(false); // give the user some privacy
+
+                options.setTag("plugin-version", this.getDescription().getVersion());
+                options.setTag("server-version", VersionController.version.toString());
+                options.setTag("spigot", Boolean.toString(!VersionController.isPaper));
+                // TODO attach config file
+                // TODO add plugins using
+
+                // TODO DEBUG ONLY
+                options.setDebug(true);
+
+                this.hub = new Hub(options);
+            }
+
             this.preOnEnable();
 
             if (this.getMetricsID() != null) {
@@ -287,6 +292,9 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
         } catch (Exception ex) {
             this.reportException(ex);
         }
+
+        this.hub.close();
+        this.hub = null;
     }
 
     public void preOnEnable() {}
