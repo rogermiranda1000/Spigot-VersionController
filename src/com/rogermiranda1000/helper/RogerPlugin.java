@@ -29,7 +29,7 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor 
     private CustomCommand []commands;
     private final Metrics.CustomChart []charts;
     private final ArrayList<CustomBlock<?>> customBlocks;
-    private String noPermissionsMessage;
+    private String noPermissionsMessage, unknownMessage;
 
     @Nullable
     private Metrics metrics;
@@ -101,8 +101,9 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor 
         return this;
     }
 
-    public void setNoPermissionsMessage(String msg) {
-        this.noPermissionsMessage = msg;
+    public void setCommandMessages(String noPermissionsMessage, String unknownMessage) {
+        this.noPermissionsMessage = noPermissionsMessage;
+        this.unknownMessage = unknownMessage;
     }
 
     /**
@@ -282,7 +283,7 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor 
                 return true;
             }
 
-            sender.sendMessage(this.errorPrefix +"Unknown command");
+            sender.sendMessage(this.errorPrefix + this.unknownMessage);
             this.commands[0].notifier.onCommand(sender, new String[]{}); // '?' command
             return true;
         } catch (Exception ex) {
