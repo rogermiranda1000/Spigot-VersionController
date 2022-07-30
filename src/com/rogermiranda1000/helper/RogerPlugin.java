@@ -5,6 +5,7 @@ import com.rogermiranda1000.helper.metrics.Metrics;
 import com.rogermiranda1000.versioncontroller.Version;
 import com.rogermiranda1000.versioncontroller.VersionChecker;
 import com.rogermiranda1000.versioncontroller.VersionController;
+import io.sentry.Sentry;
 import net.md_5.bungee.api.ChatColor;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
@@ -46,7 +47,7 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor 
      * JavaPlugin with some basic functionalities. Also enables report data
      * @param commands      All the commands from the plugin. It's important that in the first position you set the 'help' command
      * @param charts        All the reported data
-     * @param listeners     All the event listeners from the plugin
+     * @param listeners     All the event listeners from the plugin TODO protect the listeners here
      */
     public RogerPlugin(CustomCommand []commands, Metrics.CustomChart []charts, Listener... listeners) {
         this.customBlocks = new ArrayList<>();
@@ -54,6 +55,17 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor 
         this.commands = commands;
         this.charts = charts;
         this.listeners = listeners; // Listener... is the same than Listener[]
+
+        if (this.getSentryDsn() != null) {
+            Sentry.init(options -> {
+                options.setDsn(this.getSentryDsn());
+                // Set tracesSampleRate to 1.0 to capture 100% of transactions for performance monitoring.
+                // We recommend adjusting this value in production.
+                options.setTracesSampleRate(1.0);
+                // When first trying Sentry it's good to see what the SDK is doing:
+                options.setDebug(true);
+            });
+        }
     }
 
     public RogerPlugin(Listener... listeners) {
@@ -140,67 +152,90 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor 
     @Nullable
     public Integer getMetricsID() { return null; }
 
+    @Nullable
+    public String getSentryDsn() { return null; }
+
     /**
      * Check for updates, starts the listeners (& commands) and loads CustomBlocks
-     * The sons must call super.onEnable()
      */
     @Override
     public void onEnable() {
-        this.isRunning = true;
-        // TODO any way to save the instance here?
+        try {
+            this.isRunning = true;
+            // TODO any way to save the instance here?
 
-        if (this.getMetricsID() != null) {
-            this.metrics = new Metrics(this, this.getMetricsID());
-            for (Metrics.CustomChart chart : this.charts) this.metrics.addCustomChart(chart);
-        }
+            this.preOnEnable();
 
-        Bukkit.getScheduler().runTaskAsynchronously(this,()->{
-            try {
-                String id = this.getPluginID();
-                if (id != null) {
-                    String version = VersionChecker.getVersion(id);
-                    if (VersionChecker.isLower(this.getDescription().getVersion(), version)) this.printConsoleWarningMessage("v" + version + " is now available! You should consider updating the plugin.");
+            if (this.getMetricsID() != null) {
+                this.metrics = new Metrics(this, this.getMetricsID());
+                for (Metrics.CustomChart chart : this.charts) this.metrics.addCustomChart(chart);
+            }
+
+            Bukkit.getScheduler().runTaskAsynchronously(this,()->{
+                try {
+                    String id = this.getPluginID();
+                    if (id != null) {
+                        String version = VersionChecker.getVersion(id);
+                        if (VersionChecker.isLower(this.getDescription().getVersion(), version)) this.printConsoleWarningMessage("v" + version + " is now available! You should consider updating the plugin.");
+                    }
+                } catch (IOException e) {
+                    this.printConsoleWarningMessage("Can't check for updates.");
                 }
-            } catch (IOException e) {
-                this.printConsoleWarningMessage("Can't check for updates.");
+            });
+
+            // register the events
+            PluginManager pm = getServer().getPluginManager();
+            for (Listener lis : this.listeners) pm.registerEvents(lis, this); // TODO ignore some events depending on the version
+            for (CustomBlock<?> cb : this.customBlocks) cb.register();
+
+            if (this.commands.length > 0 && VersionController.version.compareTo(Version.MC_1_10) >= 0) {
+                // if MC > 10 we can send hints onTab
+                String commandBase = this.getName().toLowerCase();
+                getCommand(commandBase).setTabCompleter(new HintEvent(this));
             }
-        });
 
-        // register the events
-        PluginManager pm = getServer().getPluginManager();
-        for (Listener lis : this.listeners) pm.registerEvents(lis, this); // TODO ignore some events depending on the version
-        for (CustomBlock<?> cb : this.customBlocks) cb.register();
-
-        if (this.commands.length > 0 && VersionController.version.compareTo(Version.MC_1_10) >= 0) {
-            // if MC > 10 we can send hints onTab
-            String commandBase = this.getName().toLowerCase();
-            getCommand(commandBase).setTabCompleter(new HintEvent(this));
-        }
-
-        // call enable functions
-        for (CustomBlock<?> cb : this.customBlocks) {
-            try {
-                cb.load();
-            } catch (IOException ex) {
-                this.printConsoleErrorMessage("Invalid file format. The block '" + cb.getId() + "' can't be loaded.");
+            // call enable functions
+            for (CustomBlock<?> cb : this.customBlocks) {
+                try {
+                    cb.load();
+                } catch (IOException ex) {
+                    this.printConsoleErrorMessage("Invalid file format. The block '" + cb.getId() + "' can't be loaded.");
+                }
             }
+
+            this.postOnEnable();
+        } catch (Exception ex) {
+            Sentry.captureException(ex);
         }
     }
 
     @Override
     public void onDisable() {
-        this.isRunning = false;
+        try {
+            this.isRunning = false;
 
-        // call disable functions
-        for (CustomBlock<?> cb : this.customBlocks) {
-            try {
-                cb.save();
-            } catch (IOException e) {
-                this.printConsoleErrorMessage("Error while disabling custom block"); // TODO get more info
-                e.printStackTrace();
+            this.preOnDisable();
+
+            // call disable functions
+            for (CustomBlock<?> cb : this.customBlocks) {
+                try {
+                    cb.save();
+                } catch (IOException e) {
+                    this.printConsoleErrorMessage("Error while disabling custom block"); // TODO get more info
+                    e.printStackTrace();
+                }
             }
+
+            this.postOnDisable();
+        } catch (Exception ex) {
+            Sentry.captureException(ex);
         }
     }
+
+    public void preOnEnable() {}
+    public void postOnEnable() {}
+    public void preOnDisable() {}
+    public void postOnDisable() {}
 
     public void clearCustomBlocks() {
         for (CustomBlock<?> cb : this.customBlocks) {
@@ -210,32 +245,37 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor 
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command cmd, @NotNull String label, @NotNull String[] args) {
-        for (CustomCommand command : this.commands) {
-            switch (command.search((sender instanceof Player) ? (Player) sender : null, cmd.getName(), args)) {
-                case NO_MATCH:
-                    continue;
+        try {
+            for (CustomCommand command : this.commands) {
+                switch (command.search((sender instanceof Player) ? (Player) sender : null, cmd.getName(), args)) {
+                    case NO_MATCH:
+                        continue;
 
-                case NO_PERMISSIONS:
-                    sender.sendMessage(this.errorPrefix + "You don't have the permissions to do that.");
-                    break;
-                case MATCH:
-                    command.notifier.onCommand(sender, args);
-                    break;
-                case NO_PLAYER:
-                    sender.sendMessage("Don't use this command in console.");
-                    break;
-                case INVALID_LENGTH:
-                    sender.sendMessage(this.errorPrefix +"Unknown command. Use " + ChatColor.GOLD + "/mineit ?");
-                    break;
-                default:
-                    this.printConsoleErrorMessage("Unknown response to command");
-                    return false;
+                    case NO_PERMISSIONS:
+                        sender.sendMessage(this.errorPrefix + "You don't have the permissions to do that.");
+                        break;
+                    case MATCH:
+                        command.notifier.onCommand(sender, args);
+                        break;
+                    case NO_PLAYER:
+                        sender.sendMessage("Don't use this command in console.");
+                        break;
+                    case INVALID_LENGTH:
+                        sender.sendMessage(this.errorPrefix +"Unknown command. Use " + ChatColor.GOLD + "/mineit ?");
+                        break;
+                    default:
+                        this.printConsoleErrorMessage("Unknown response to command");
+                        return false;
+                }
+                return true;
             }
-            return true;
-        }
 
-        sender.sendMessage(this.errorPrefix +"Unknown command");
-        this.commands[0].notifier.onCommand(sender, new String[]{}); // '?' command
-        return true;
+            sender.sendMessage(this.errorPrefix +"Unknown command");
+            this.commands[0].notifier.onCommand(sender, new String[]{}); // '?' command
+            return true;
+        } catch (Exception ex) {
+            Sentry.captureException(ex);
+            return false;
+        }
     }
 }
