@@ -6,8 +6,7 @@ import com.rogermiranda1000.helper.reflection.SpigotEventOverrider;
 import com.rogermiranda1000.versioncontroller.Version;
 import com.rogermiranda1000.versioncontroller.VersionChecker;
 import com.rogermiranda1000.versioncontroller.VersionController;
-import io.sentry.Sentry;
-import io.sentry.UserFeedback;
+import io.sentry.*;
 import io.sentry.protocol.SentryId;
 import net.md_5.bungee.api.ChatColor;
 import org.bukkit.Bukkit;
@@ -38,6 +37,8 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
 
     @Nullable
     private Metrics metrics;
+    @Nullable
+    private IHub hub;
     private boolean isRunning;
 
     /**
@@ -65,20 +66,20 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
         this.noPermissionsMessage = "You don't have the permissions to do that.";
 
         if (this.getSentryDsn() != null) {
-            Sentry.init(options -> {
-                options.setDsn(this.getSentryDsn());
-                // capture 100% of transactions for performance monitoring
-                options.setTracesSampleRate(1.0);
+            SentryOptions options = new SentryOptions();
+            options.setDsn(this.getSentryDsn());
+            options.setTracesSampleRate(1.0); // capture 100% of transactions for performance monitoring
 
-                options.setTag("plugin-version", this.getDescription().getVersion());
-                options.setTag("server-version", VersionController.version.toString());
-                options.setTag("spigot", Boolean.toString(!VersionController.isPaper));
-                // TODO attach config file
-                // TODO add plugins using
+            options.setTag("plugin-version", this.getDescription().getVersion());
+            options.setTag("server-version", VersionController.version.toString());
+            options.setTag("spigot", Boolean.toString(!VersionController.isPaper));
+            // TODO attach config file
+            // TODO add plugins using
 
-                // TODO DEBUG ONLY
-                options.setDebug(true);
-            });
+            // TODO DEBUG ONLY
+            options.setDebug(true);
+
+            this.hub = new Hub(options);
         }
     }
 
@@ -176,24 +177,24 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
 
     @Override
     public void reportException(Exception ex) {
-        Sentry.captureException(ex);
+        this.hub.captureException(ex);
         ex.printStackTrace();
     }
 
     @Override
     public void reportException(String err) {
-        Sentry.captureMessage(err);
+        this.hub.captureMessage(err);
         System.err.println(err);
     }
 
     @Override
     public void userReport(@Nullable String contact, String message) {
-        SentryId sentryId = Sentry.captureMessage("report");
+        SentryId sentryId = this.hub.captureMessage("report");
 
         UserFeedback userFeedback = new UserFeedback(sentryId);
         userFeedback.setComments(message);
         if (contact != null) userFeedback.setEmail(contact);
-        Sentry.captureUserFeedback(userFeedback);
+        this.hub.captureUserFeedback(userFeedback);
     }
 
     /**
