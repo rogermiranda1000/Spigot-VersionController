@@ -165,6 +165,12 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
     }
 
     @Override
+    public void reportRepeatedException(Exception ex) {
+        // TODO check for repeated
+        this.reportException(ex);
+    }
+
+    @Override
     public void reportException(String err) {
         this.hub.captureMessage(err);
         System.err.println(err);
@@ -245,7 +251,7 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
                             throw ex;
                         }
                     } catch (Exception ex) {
-                        this.reportException(ex);
+                        this.reportRepeatedException(ex);
                     }
                 });
             }
