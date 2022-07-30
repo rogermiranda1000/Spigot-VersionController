@@ -22,6 +22,7 @@ import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.FileNotFoundException;
 import java.util.Properties;
 
 /**
@@ -61,9 +62,10 @@ public class VersionController extends ItemManager implements BlockManager, Part
             if (jar == null || jar.equals("")) throw new NullPointerException();
             return jar;
         } catch (NullPointerException ex) {
-            System.err.println("Couldn't get server's jar path. List of properties:");
-            p.list(System.err);
-            return "";
+            StringBuilder error = new StringBuilder()
+                    .append("Couldn't get server's jar path. List of properties:");
+            for (Object property : p.values()) error.append(property.toString());
+            throw new RuntimeException(error.toString());
         }
     }
 

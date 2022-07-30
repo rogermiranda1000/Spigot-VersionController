@@ -2,9 +2,12 @@ package com.rogermiranda1000.helper;
 
 import com.rogermiranda1000.helper.blocks.CustomBlock;
 import com.rogermiranda1000.helper.metrics.Metrics;
+import com.rogermiranda1000.helper.reflection.SpigotEventOverrider;
 import com.rogermiranda1000.versioncontroller.Version;
 import com.rogermiranda1000.versioncontroller.VersionChecker;
 import com.rogermiranda1000.versioncontroller.VersionController;
+import io.sentry.*;
+import io.sentry.protocol.SentryId;
 import net.md_5.bungee.api.ChatColor;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
@@ -13,24 +16,29 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.craftbukkit.libs.jline.internal.Nullable;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
-import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
-public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor {
+public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor, Reporter {
     public final String clearPrefix = ChatColor.GOLD.toString() + ChatColor.BOLD + "[" + this.getName() + "] " + ChatColor.GREEN,
             errorPrefix = ChatColor.GOLD.toString() + ChatColor.BOLD + "[" + this.getName() + "] " + ChatColor.RED;
 
     private final Listener []listeners;
     private CustomCommand []commands;
     private final Metrics.CustomChart []charts;
-    private final ArrayList<CustomBlock<?>> customBlocks;
+    private final List<CustomBlock<?>> customBlocks;
+    private String noPermissionsMessage, unknownMessage;
 
     @Nullable
     private Metrics metrics;
+    @Nullable
+    private IHub hub;
     private boolean isRunning;
 
     /**
@@ -48,12 +56,14 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor 
      * @param charts        All the reported data
      * @param listeners     All the event listeners from the plugin
      */
-    public RogerPlugin(CustomCommand []commands, Metrics.CustomChart []charts, Listener... listeners) {
+    public RogerPlugin(CustomCommand []commands, Metrics.CustomChart []charts, final Listener... listeners) {
         this.customBlocks = new ArrayList<>();
         this.isRunning = false;
         this.commands = commands;
         this.charts = charts;
         this.listeners = listeners; // Listener... is the same than Listener[]
+
+        this.noPermissionsMessage = "You don't have the permissions to do that.";
     }
 
     public RogerPlugin(Listener... listeners) {
@@ -87,6 +97,11 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor 
         }
 
         return this;
+    }
+
+    public void setCommandMessages(String noPermissionsMessage, String unknownMessage) {
+        this.noPermissionsMessage = noPermissionsMessage;
+        this.unknownMessage = unknownMessage;
     }
 
     /**
@@ -140,67 +155,162 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor 
     @Nullable
     public Integer getMetricsID() { return null; }
 
+    @Nullable
+    public String getSentryDsn() { return null; }
+
+    @Override
+    public void reportException(Throwable ex) {
+        this.hub.captureException(ex);
+        this.printConsoleErrorMessage("Error captured:");
+        ex.printStackTrace();
+    }
+
+    private int reports = 0;
+    @Override
+    public void reportRepeatedException(Throwable ex) {
+        if (++reports > 30) return; // 30 reports per reload; otherwise ignore
+        this.reportException(ex);
+    }
+
+    @Override
+    public void reportException(String err) {
+        this.hub.captureMessage(err);
+        System.err.println(err);
+    }
+
+    @Override
+    public void userReport(@Nullable String contact, String message) {
+        SentryId sentryId = this.hub.captureMessage("report");
+
+        UserFeedback userFeedback = new UserFeedback(sentryId);
+        userFeedback.setComments(message);
+        if (contact != null) userFeedback.setEmail(contact);
+        this.hub.captureUserFeedback(userFeedback);
+        getLogger().info("Thanks for your feedback!");
+    }
+
     /**
      * Check for updates, starts the listeners (& commands) and loads CustomBlocks
-     * The sons must call super.onEnable()
      */
     @Override
     public void onEnable() {
-        this.isRunning = true;
-        // TODO any way to save the instance here?
+        try {
+            this.isRunning = true;
+            // TODO any way to save the instance here?
 
-        if (this.getMetricsID() != null) {
-            this.metrics = new Metrics(this, this.getMetricsID());
-            for (Metrics.CustomChart chart : this.charts) this.metrics.addCustomChart(chart);
-        }
+            if (this.getSentryDsn() != null) {
+                SentryOptions options = new SentryOptions();
+                options.setDsn(this.getSentryDsn());
 
-        Bukkit.getScheduler().runTaskAsynchronously(this,()->{
-            try {
-                String id = this.getPluginID();
-                if (id != null) {
-                    String version = VersionChecker.getVersion(id);
-                    if (VersionChecker.isLower(this.getDescription().getVersion(), version)) this.printConsoleWarningMessage("v" + version + " is now available! You should consider updating the plugin.");
+                // capture 100% of transactions for performance monitoring
+                options.setSampleRate(1.0);
+                options.setTracesSampleRate(1.0);
+
+                options.setAttachServerName(false); // give the user some privacy
+
+                options.setRelease(this.getDescription().getVersion());
+
+                options.setTag("server-version", VersionController.version.toString());
+                options.setTag("spigot", Boolean.toString(!VersionController.isPaper));
+                // TODO attach config file
+                // TODO add plugins using
+
+                /*options.setDebug(true);
+                options.setDiagnosticLevel(SentryLevel.ERROR);*/
+
+                this.hub = new Hub(options);
+            }
+
+            this.preOnEnable();
+
+            if (this.getMetricsID() != null) {
+                this.metrics = new Metrics(this, this.getMetricsID());
+                for (Metrics.CustomChart chart : this.charts) this.metrics.addCustomChart(chart);
+            }
+
+            Bukkit.getScheduler().runTaskAsynchronously(this,()->{
+                try {
+                    String id = this.getPluginID();
+                    if (id != null) {
+                        String version = VersionChecker.getVersion(id);
+                        if (VersionChecker.isLower(this.getDescription().getVersion(), version)) this.printConsoleWarningMessage("v" + version + " is now available! You should consider updating the plugin.");
+                    }
+                } catch (IOException e) {
+                    this.printConsoleWarningMessage("Can't check for updates.");
                 }
-            } catch (IOException e) {
-                this.printConsoleWarningMessage("Can't check for updates.");
+            });
+
+            // get all the events
+            List<Listener> listeners = new ArrayList<>(Arrays.asList(this.listeners));
+            for (CustomBlock<?> cb : this.customBlocks) listeners.addAll(cb.register());
+
+            // register the events
+            for (Listener lis : listeners) {
+                SpigotEventOverrider.wrapListeners(this, lis, (run) -> {
+                    try {
+                        try {
+                            run.run();
+                        } catch (SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
+                            System.err.println("Error while overriding " + lis.getClass().getName());
+                            throw ex;
+                        }
+                    } catch (Throwable ex) {
+                        this.reportRepeatedException(ex);
+                    }
+                });
             }
-        });
 
-        // register the events
-        PluginManager pm = getServer().getPluginManager();
-        for (Listener lis : this.listeners) pm.registerEvents(lis, this); // TODO ignore some events depending on the version
-        for (CustomBlock<?> cb : this.customBlocks) cb.register();
-
-        if (this.commands.length > 0 && VersionController.version.compareTo(Version.MC_1_10) >= 0) {
-            // if MC > 10 we can send hints onTab
-            String commandBase = this.getName().toLowerCase();
-            getCommand(commandBase).setTabCompleter(new HintEvent(this));
-        }
-
-        // call enable functions
-        for (CustomBlock<?> cb : this.customBlocks) {
-            try {
-                cb.load();
-            } catch (IOException ex) {
-                this.printConsoleErrorMessage("Invalid file format. The block '" + cb.getId() + "' can't be loaded.");
+            if (this.commands.length > 0 && VersionController.version.compareTo(Version.MC_1_10) >= 0) {
+                // if MC > 10 we can send hints onTab
+                String commandBase = this.getName().toLowerCase();
+                getCommand(commandBase).setTabCompleter(new HintEvent(this));
             }
+
+            // call enable functions
+            for (CustomBlock<?> cb : this.customBlocks) {
+                try {
+                    cb.load();
+                } catch (IOException ex) {
+                    this.printConsoleErrorMessage("Invalid file format. The block '" + cb.getId() + "' can't be loaded.");
+                }
+            }
+
+            this.postOnEnable();
+        } catch (Throwable ex) {
+            this.reportException(ex);
         }
     }
 
     @Override
     public void onDisable() {
-        this.isRunning = false;
+        try {
+            this.isRunning = false;
 
-        // call disable functions
-        for (CustomBlock<?> cb : this.customBlocks) {
-            try {
-                cb.save();
-            } catch (IOException e) {
-                this.printConsoleErrorMessage("Error while disabling custom block"); // TODO get more info
-                e.printStackTrace();
+            this.preOnDisable();
+
+            // call disable functions
+            for (CustomBlock<?> cb : this.customBlocks) {
+                try {
+                    cb.save();
+                } catch (IOException e) {
+                    this.printConsoleErrorMessage("Error while disabling custom block"); // TODO get more info
+                    e.printStackTrace();
+                }
             }
+
+            this.postOnDisable();
+        } catch (Throwable ex) {
+            this.reportException(ex);
         }
+
+        this.hub.close();
+        this.hub = null;
     }
+
+    public void preOnEnable() {}
+    public void postOnEnable() {}
+    public void preOnDisable() {}
+    public void postOnDisable() {}
 
     public void clearCustomBlocks() {
         for (CustomBlock<?> cb : this.customBlocks) {
@@ -210,32 +320,37 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor 
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command cmd, @NotNull String label, @NotNull String[] args) {
-        for (CustomCommand command : this.commands) {
-            switch (command.search((sender instanceof Player) ? (Player) sender : null, cmd.getName(), args)) {
-                case NO_MATCH:
-                    continue;
+        try {
+            for (CustomCommand command : this.commands) {
+                switch (command.search((sender instanceof Player) ? (Player) sender : null, cmd.getName(), args)) {
+                    case NO_MATCH:
+                        continue;
 
-                case NO_PERMISSIONS:
-                    sender.sendMessage(this.errorPrefix + "You don't have the permissions to do that.");
-                    break;
-                case MATCH:
-                    command.notifier.onCommand(sender, args);
-                    break;
-                case NO_PLAYER:
-                    sender.sendMessage("Don't use this command in console.");
-                    break;
-                case INVALID_LENGTH:
-                    sender.sendMessage(this.errorPrefix +"Unknown command. Use " + ChatColor.GOLD + "/mineit ?");
-                    break;
-                default:
-                    this.printConsoleErrorMessage("Unknown response to command");
-                    return false;
+                    case NO_PERMISSIONS:
+                        sender.sendMessage(this.errorPrefix + this.noPermissionsMessage);
+                        break;
+                    case MATCH:
+                        command.notifier.onCommand(sender, args);
+                        break;
+                    case NO_PLAYER:
+                        sender.sendMessage("Don't use this command in console.");
+                        break;
+                    case INVALID_LENGTH:
+                        sender.sendMessage(this.errorPrefix +"Unknown command. Use " + ChatColor.GOLD + "/" + this.getName().toLowerCase() + " ?");
+                        break;
+                    default:
+                        this.printConsoleErrorMessage("Unknown response to command");
+                        return false;
+                }
+                return true;
             }
-            return true;
-        }
 
-        sender.sendMessage(this.errorPrefix +"Unknown command");
-        this.commands[0].notifier.onCommand(sender, new String[]{}); // '?' command
-        return true;
+            sender.sendMessage(this.errorPrefix + this.unknownMessage);
+            this.commands[0].notifier.onCommand(sender, new String[]{}); // '?' command
+            return true;
+        } catch (Throwable ex) {
+            this.reportException(ex);
+            return false;
+        }
     }
 }
