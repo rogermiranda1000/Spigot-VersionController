@@ -44,7 +44,7 @@ public class CustomCommand {
     /**
      * Constructor
      * @param command Regex to match the command ($ and ^ will be added after; do not add it)
-     * @param argLength Nº of arguments (/!\ the first string it's not an argument)
+     * @param argLength Nº of arguments (/!\ the first string it's not an argument); -1 if any
      * @param permission Permission to run the command (if needed)
      * @param consoleUsage Can the command be used by the console?
      * @param description Command show + description. If null it takes the command itself
@@ -68,7 +68,7 @@ public class CustomCommand {
      * @param description Command show + description. If null it takes the command itself
      */
     public CustomCommand(String command, @Nullable String permission, boolean consoleUsage, @Nullable String usage, @Nullable String description, MatchCommandNotifier notifier) throws PatternSyntaxException {
-        this(command, StringUtils.countMatches(command, " "), permission, consoleUsage, usage, description, notifier);
+        this(command, Pattern.compile("(?<!\\\\)\\.").matcher(command).find() ? -1 : StringUtils.countMatches(command, " "), permission, consoleUsage, usage, description, notifier);
 
         String []pattern = command.split(" ");
         this.partialPattern = new Pattern[pattern.length];
@@ -91,7 +91,7 @@ public class CustomCommand {
     public CustomCommandReturns search(@Nullable Player player, @NotNull String cmd, @NotNull String[] args) {
         if (!this.commandPattern.matcher(CustomCommand.merge(cmd, args)).matches()) return CustomCommandReturns.NO_MATCH;
 
-        if (args.length != this.argLength) return CustomCommandReturns.INVALID_LENGTH;
+        if (this.argLength != -1 && args.length != this.argLength) return CustomCommandReturns.INVALID_LENGTH;
         if (player != null) {
             // it's a player
             if (this.permission != null && !player.hasPermission(this.permission)) return CustomCommandReturns.NO_PERMISSIONS;
