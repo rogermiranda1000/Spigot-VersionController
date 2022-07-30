@@ -24,6 +24,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor, Reporter {
     public final String clearPrefix = ChatColor.GOLD.toString() + ChatColor.BOLD + "[" + this.getName() + "] " + ChatColor.GREEN,
@@ -180,13 +181,12 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
 
     @Override
     public void userReport(@Nullable String contact, String message) {
-        SentryId sentryId = this.hub.captureMessage("report");
+        SentryId sentryId = this.hub.captureMessage("report-" + UUID.randomUUID());
 
         UserFeedback userFeedback = new UserFeedback(sentryId);
         userFeedback.setComments(message);
         if (contact != null) userFeedback.setEmail(contact);
         this.hub.captureUserFeedback(userFeedback);
-        getLogger().info("Thanks for your feedback!");
     }
 
     /**
