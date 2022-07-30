@@ -23,6 +23,7 @@ public class SentryScheduler implements BukkitScheduler {
                 r.run();
             } catch (Exception ex) {
                 Sentry.captureException(ex);
+                ex.printStackTrace();
             }
         };
     });

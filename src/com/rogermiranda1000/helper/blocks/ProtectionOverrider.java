@@ -7,6 +7,7 @@ import com.rogermiranda1000.helper.reflection.SpigotEventOverrider;
 import com.sk89q.worldguard.bukkit.listener.EventAbstractionListener;
 import com.sk89q.worldguard.bukkit.listener.WorldGuardBlockListener;
 import org.bukkit.Bukkit;
+import org.bukkit.craftbukkit.libs.jline.internal.Nullable;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -92,23 +93,23 @@ public class ProtectionOverrider {
     /**
      * Specifies the caller as overrider
      * /!\\ Must be called from a plugin with dependencies/soft-dependencies of WorldGuard and Residence /!\\
+     * @return The listener that must be registered (null if none)
      */
-    public static void instantiate(RogerPlugin plugin, Object overrider) {
-        plugin.getLogger().info("Overriding protection plugins...");
+    @Nullable
+    public static Listener instantiate(RogerPlugin plugin, Object overrider) {
         synchronized (ProtectionOverrider.class) {
             if (ProtectionOverrider.instance != null) {
                 ProtectionOverrider.instance.overriders.add(overrider);
-
-                plugin.getLogger().info("Protection plugins already overridden.");
-                return;
+                return null;
             }
 
+            plugin.getLogger().info("Overriding protection plugins...");
             ProtectionOverrider.instance = new ProtectionOverrider(plugin);
             ProtectionOverrider.instance.overrideProtections();
             ProtectionOverrider.instance.overriders.add(overrider);
         }
 
-        Bukkit.getPluginManager().registerEvents(new OverriddenProtectionsPlayer(), plugin);
+        return new OverriddenProtectionsPlayer();
     }
 
     /**

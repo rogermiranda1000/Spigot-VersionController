@@ -2,10 +2,13 @@ package com.rogermiranda1000.helper;
 
 import com.rogermiranda1000.helper.blocks.CustomBlock;
 import com.rogermiranda1000.helper.metrics.Metrics;
+import com.rogermiranda1000.helper.reflection.SpigotEventOverrider;
 import com.rogermiranda1000.versioncontroller.Version;
 import com.rogermiranda1000.versioncontroller.VersionChecker;
 import com.rogermiranda1000.versioncontroller.VersionController;
 import io.sentry.Sentry;
+import io.sentry.UserFeedback;
+import io.sentry.protocol.SentryId;
 import net.md_5.bungee.api.ChatColor;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
@@ -14,21 +17,23 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.craftbukkit.libs.jline.internal.Nullable;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
-import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
-public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor {
+public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor, Reporter {
     public final String clearPrefix = ChatColor.GOLD.toString() + ChatColor.BOLD + "[" + this.getName() + "] " + ChatColor.GREEN,
             errorPrefix = ChatColor.GOLD.toString() + ChatColor.BOLD + "[" + this.getName() + "] " + ChatColor.RED;
 
     private final Listener []listeners;
     private CustomCommand []commands;
     private final Metrics.CustomChart []charts;
-    private final ArrayList<CustomBlock<?>> customBlocks;
+    private final List<CustomBlock<?>> customBlocks;
     private String noPermissionsMessage, unknownMessage;
 
     @Nullable
@@ -48,9 +53,9 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor 
      * JavaPlugin with some basic functionalities. Also enables report data
      * @param commands      All the commands from the plugin. It's important that in the first position you set the 'help' command
      * @param charts        All the reported data
-     * @param listeners     All the event listeners from the plugin TODO protect the listeners here
+     * @param listeners     All the event listeners from the plugin
      */
-    public RogerPlugin(CustomCommand []commands, Metrics.CustomChart []charts, Listener... listeners) {
+    public RogerPlugin(CustomCommand []commands, Metrics.CustomChart []charts, final Listener... listeners) {
         this.customBlocks = new ArrayList<>();
         this.isRunning = false;
         this.commands = commands;
@@ -70,6 +75,9 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor 
                 options.setTag("spigot", Boolean.toString(!VersionController.isPaper));
                 // TODO attach config file
                 // TODO add plugins using
+
+                // TODO DEBUG ONLY
+                options.setDebug(true);
             });
         }
     }
@@ -166,14 +174,26 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor 
     @Nullable
     public String getSentryDsn() { return null; }
 
+    @Override
     public void reportException(Exception ex) {
         Sentry.captureException(ex);
         ex.printStackTrace();
     }
 
+    @Override
     public void reportException(String err) {
         Sentry.captureMessage(err);
         System.err.println(err);
+    }
+
+    @Override
+    public void userReport(@Nullable String contact, String message) {
+        SentryId sentryId = Sentry.captureMessage("report");
+
+        UserFeedback userFeedback = new UserFeedback(sentryId);
+        userFeedback.setComments(message);
+        if (contact != null) userFeedback.setEmail(contact);
+        Sentry.captureUserFeedback(userFeedback);
     }
 
     /**
@@ -204,10 +224,25 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor 
                 }
             });
 
+            // get all the events
+            List<Listener> listeners = Arrays.asList(this.listeners);
+            for (CustomBlock<?> cb : this.customBlocks) listeners.addAll(cb.register());
+
             // register the events
-            PluginManager pm = getServer().getPluginManager();
-            for (Listener lis : this.listeners) pm.registerEvents(lis, this); // TODO ignore some events depending on the version
-            for (CustomBlock<?> cb : this.customBlocks) cb.register();
+            for (Listener lis : listeners) {
+                SpigotEventOverrider.wrapListeners(this, lis, (run) -> {
+                    try {
+                        try {
+                            run.run();
+                        } catch (SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
+                            System.err.println("Error while overriding " + lis.getClass().getName());
+                            throw ex;
+                        }
+                    } catch (Exception ex) {
+                        this.reportException(ex);
+                    }
+                });
+            }
 
             if (this.commands.length > 0 && VersionController.version.compareTo(Version.MC_1_10) >= 0) {
                 // if MC > 10 we can send hints onTab

@@ -110,9 +110,18 @@ public abstract class CustomBlock<T> implements Listener {
         }, overrideProtections, onEventSuceedRemove, storeFunctions);
     }
 
-    public void register() {
-        Bukkit.getPluginManager().registerEvents(this, this.plugin);
-        if (overrideProtections) ProtectionOverrider.instantiate(plugin, this);
+    /**
+     * Registers the block and returns the listeners that must be registered
+     * @return Listeners to be registered
+     */
+    public List<Listener> register() {
+        List<Listener> r = new ArrayList<>();
+        r.add(this);
+        if (this.overrideProtections) {
+            Listener prot = ProtectionOverrider.instantiate(plugin, this);
+            if (prot != null) r.add(prot);
+        }
+        return r;
     }
 
     public void unregister() {
