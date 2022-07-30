@@ -162,10 +162,12 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor 
 
     public void reportException(Exception ex) {
         Sentry.captureException(ex);
+        ex.printStackTrace();
     }
 
     public void reportException(String err) {
         Sentry.captureMessage(err);
+        System.err.println(err);
     }
 
     /**
