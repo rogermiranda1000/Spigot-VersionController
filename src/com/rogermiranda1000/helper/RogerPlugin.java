@@ -64,6 +64,12 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor 
                 options.setDsn(this.getSentryDsn());
                 // capture 100% of transactions for performance monitoring
                 options.setTracesSampleRate(1.0);
+
+                options.setTag("plugin-version", this.getDescription().getVersion());
+                options.setTag("server-version", VersionController.version.toString());
+                options.setTag("spigot", Boolean.toString(!VersionController.isPaper));
+                // TODO attach config file
+                // TODO add plugins using
             });
         }
     }
