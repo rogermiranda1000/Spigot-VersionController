@@ -159,29 +159,38 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
     @Nullable
     public String getSentryDsn() { return null; }
 
+    @Nullable
+    private static StackTraceElement getMyFault(Throwable ex) {
+        // get the first time my package was found
+        for (StackTraceElement stack : ex.getStackTrace()) {
+            if (stack.getClassName().startsWith("com.rogermiranda1000.")) {
+                return stack;
+            }
+        }
+        return null;
+    }
+
     private void setFingerprint(Scope scope, Throwable ex) {
         List<String> r = new ArrayList<>();
         r.add(ex.getClass().getName());
         r.add(ex.getMessage());
-
-        // get the last time my package was found
-        for (StackTraceElement stack : ex.getStackTrace()) {
-            if (stack.getClassName().startsWith("com.rogermiranda1000.")) {
-                r.add(stack.getClassName() + ": " + stack.getLineNumber());
-                scope.setFingerprint(r);
-                return;
-            }
+        StackTraceElement fail = RogerPlugin.getMyFault(ex);
+        if (fail != null) {
+            r.add(fail.getClassName() + ": " + fail.getLineNumber());
+            scope.setFingerprint(r);
         }
-        // my package was not found -> default scope
+        // else (my package was not found) -> default scope
     }
 
     @Override
     public void reportException(final Throwable ex) {
         if (this.hub != null) {
             this.hub.captureException(ex, (scope)->this.setFingerprint(scope, ex));
-            this.printConsoleErrorMessage("Error captured:");
+
+            StackTraceElement fault = getMyFault(ex);
+            this.printConsoleErrorMessage("Error captured: " + ex.getMessage() + ((fault == null) ? "" : ("(" + fault.getClassName() + ":" + fault.getLineNumber() + ")")));
         }
-        ex.printStackTrace();
+        else ex.printStackTrace();
     }
 
     private int reports = 0;
