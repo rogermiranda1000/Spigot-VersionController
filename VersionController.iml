@@ -20,5 +20,6 @@
     <orderEntry type="library" name="github.davidmoten.rtree.multi" level="project" />
     <orderEntry type="library" name="Residence5.0.1.6" level="project" />
     <orderEntry type="library" name="worldguard-bukkit-7.0.0" level="project" />
+    <orderEntry type="library" name="io.sentry" level="project" />
   </component>
 </module>

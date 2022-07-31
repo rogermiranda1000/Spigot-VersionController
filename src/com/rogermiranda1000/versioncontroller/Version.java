@@ -49,6 +49,14 @@ public class Version implements Comparable<Version> {
     }
 
     /**
+     * @return 1.X (version without the last number)
+     */
+    public Version getGenericVersion() {
+        if (this.version[2] == 0) return this;
+        return new Version(this.version[0], this.version[1]);
+    }
+
+    /**
      * It compares two versions
      * @param o Object to compare
      * @return   0: if (this == o)

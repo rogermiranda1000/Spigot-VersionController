@@ -18,4 +18,9 @@ public class EntityPaper implements EntityManager {
         if (e.getTo() == null || !Objects.equals(e.getTo().getWorld(), e.getFrom().getWorld())) return new Vector(0,0,0); // not the same world
         return (e.getTo().clone()).subtract(e.getFrom()).toVector();
     }
+
+    @Override
+    public BoundingBox getBoundingBox(Entity e) {
+        return new EntitySpigotPre14().getBoundingBox(e);
+    }
 }
