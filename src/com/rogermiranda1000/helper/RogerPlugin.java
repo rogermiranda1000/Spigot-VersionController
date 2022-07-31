@@ -161,8 +161,10 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
 
     @Override
     public void reportException(Throwable ex) {
-        this.hub.captureException(ex);
-        this.printConsoleErrorMessage("Error captured:");
+        if (this.hub != null) {
+            this.hub.captureException(ex);
+            this.printConsoleErrorMessage("Error captured:");
+        }
         ex.printStackTrace();
     }
 
@@ -175,7 +177,7 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
 
     @Override
     public void reportException(String err) {
-        this.hub.captureMessage(err);
+        if (this.hub != null) this.hub.captureMessage(err);
         System.err.println(err);
     }
 
