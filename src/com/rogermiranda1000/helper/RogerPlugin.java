@@ -159,10 +159,24 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
     @Nullable
     public String getSentryDsn() { return null; }
 
+    private static void setFingerprint(Scope scope, Throwable ex) {
+        List<String> r = new ArrayList<>();
+
+        // get the last time my package was found
+        for (StackTraceElement stack : ex.getStackTrace()) {
+            if (stack.getClassName().startsWith("com.rogermiranda1000.")) {
+                r.add(ex.getCause().getClass().getName() + ": " + ex.getMessage() + " - " + stack.getClassName() + ": " + stack.getLineNumber());
+                scope.setFingerprint(r);
+                return;
+            }
+        }
+        // my package was not found -> default scope
+    }
+
     @Override
-    public void reportException(Throwable ex) {
+    public void reportException(final Throwable ex) {
         if (this.hub != null) {
-            this.hub.captureException(ex);
+            this.hub.captureException(ex, (scope)->RogerPlugin.setFingerprint(scope, ex));
             this.printConsoleErrorMessage("Error captured:");
         }
         ex.printStackTrace();
@@ -194,6 +208,29 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
         this.hub.captureUserFeedback(userFeedback);
     }
 
+    private IHub initSentry() {
+        SentryOptions options = new SentryOptions();
+        options.setDsn(this.getSentryDsn());
+
+        // capture 100% of transactions for performance monitoring
+        options.setSampleRate(1.0);
+        options.setTracesSampleRate(1.0);
+
+        options.setAttachServerName(false); // give the user some privacy
+
+        options.setRelease(this.getDescription().getVersion());
+
+        options.setTag("server-version", VersionController.version.toString());
+        options.setTag("spigot", Boolean.toString(!VersionController.isPaper));
+        // TODO attach config file
+        // TODO add plugins using
+
+        /*options.setDebug(true);
+        options.setDiagnosticLevel(SentryLevel.ERROR);*/
+
+        return new Hub(options);
+    }
+
     /**
      * Check for updates, starts the listeners (& commands) and loads CustomBlocks
      */
@@ -203,30 +240,11 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
             this.isRunning = true;
             // TODO any way to save the instance here?
 
-            if (this.getSentryDsn() != null) {
-                SentryOptions options = new SentryOptions();
-                options.setDsn(this.getSentryDsn());
-
-                // capture 100% of transactions for performance monitoring
-                options.setSampleRate(1.0);
-                options.setTracesSampleRate(1.0);
-
-                options.setAttachServerName(false); // give the user some privacy
-
-                options.setRelease(this.getDescription().getVersion());
-
-                options.setTag("server-version", VersionController.version.toString());
-                options.setTag("spigot", Boolean.toString(!VersionController.isPaper));
-                // TODO attach config file
-                // TODO add plugins using
-
-                /*options.setDebug(true);
-                options.setDiagnosticLevel(SentryLevel.ERROR);*/
-
-                this.hub = new Hub(options);
-            }
+            if (this.getSentryDsn() != null) this.hub = this.initSentry();
 
             this.preOnEnable();
+
+            // TODO abort
 
             if (this.getMetricsID() != null) {
                 this.metrics = new Metrics(this, this.getMetricsID());
