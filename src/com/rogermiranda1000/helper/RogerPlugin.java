@@ -260,12 +260,13 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
                 for (Metrics.CustomChart chart : this.charts) this.metrics.addCustomChart(chart);
             }
 
-            Bukkit.getScheduler().runTaskAsynchronously(this,()->{
+            Bukkit.getScheduler().runTaskAsynchronously(this, () -> {
                 try {
                     String id = this.getPluginID();
                     if (id != null) {
                         String version = VersionChecker.getVersion(id);
-                        if (VersionChecker.isLower(this.getDescription().getVersion(), version)) this.printConsoleWarningMessage("v" + version + " is now available! You should consider updating the plugin.");
+                        if (VersionChecker.isLower(this.getDescription().getVersion(), version))
+                            this.printConsoleWarningMessage("v" + version + " is now available! You should consider updating the plugin.");
                     }
                 } catch (IOException e) {
                     this.printConsoleWarningMessage("Can't check for updates.");
@@ -310,6 +311,11 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
             this.postOnEnable();
 
             this.isRunning = true;
+        } catch (SoftCriticalException ex) {
+            this.printConsoleErrorMessage(ex.getMessage());
+            getServer().getPluginManager().disablePlugin(this); // error in the start -> kill
+        } catch (SoftException ex) {
+            this.printConsoleErrorMessage(ex.getMessage());
         } catch (Throwable ex) {
             this.reportException(ex);
             getServer().getPluginManager().disablePlugin(this); // error in the start -> kill
