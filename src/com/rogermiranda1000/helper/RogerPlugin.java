@@ -188,7 +188,7 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
             this.hub.captureException(ex, (scope)->this.setFingerprint(scope, ex));
 
             StackTraceElement fault = getMyFault(ex);
-            this.printConsoleErrorMessage("Error captured: " + ex.getMessage() + ((fault == null) ? "" : ("(" + fault.getClassName() + ":" + fault.getLineNumber() + ")")));
+            this.printConsoleErrorMessage("Error captured: " + ex.getMessage() + ((fault == null) ? "" : (" (" + fault.getClassName() + ":" + fault.getLineNumber() + ")")));
         }
         else ex.printStackTrace();
     }
@@ -246,7 +246,6 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
     @Override
     public void onEnable() {
         try {
-            this.isRunning = true;
             // TODO any way to save the instance here?
 
             this.reports = 0;
@@ -309,14 +308,18 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
             }
 
             this.postOnEnable();
+
+            this.isRunning = true;
         } catch (Throwable ex) {
             this.reportException(ex);
+            getServer().getPluginManager().disablePlugin(this); // error in the start -> kill
         }
     }
 
     @Override
     public void onDisable() {
         try {
+            if (!this.isRunning) return; // killed onStart
             this.isRunning = false;
 
             this.preOnDisable();
