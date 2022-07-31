@@ -159,13 +159,15 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
     @Nullable
     public String getSentryDsn() { return null; }
 
-    private static void setFingerprint(Scope scope, Throwable ex) {
+    private void setFingerprint(Scope scope, Throwable ex) {
         List<String> r = new ArrayList<>();
+        r.add(ex.getClass().getName());
+        r.add(ex.getMessage());
 
         // get the last time my package was found
         for (StackTraceElement stack : ex.getStackTrace()) {
             if (stack.getClassName().startsWith("com.rogermiranda1000.")) {
-                r.add(ex.getCause().getClass().getName() + ": " + ex.getMessage() + " - " + stack.getClassName() + ": " + stack.getLineNumber());
+                r.add(stack.getClassName() + ": " + stack.getLineNumber());
                 scope.setFingerprint(r);
                 return;
             }
@@ -176,7 +178,7 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
     @Override
     public void reportException(final Throwable ex) {
         if (this.hub != null) {
-            this.hub.captureException(ex, (scope)->RogerPlugin.setFingerprint(scope, ex));
+            this.hub.captureException(ex, (scope)->this.setFingerprint(scope, ex));
             this.printConsoleErrorMessage("Error captured:");
         }
         ex.printStackTrace();
@@ -197,9 +199,7 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
 
     @Override
     public void userReport(@Nullable String contact, @Nullable String name, String message) {
-        final List<String> fingerprint = new ArrayList<>();
-        fingerprint.add(UUID.randomUUID().toString());
-        SentryId sentryId = this.hub.captureMessage("report", SentryLevel.INFO, (scope)->scope.setFingerprint(fingerprint));
+        SentryId sentryId = this.hub.captureMessage("report", SentryLevel.INFO, (scope)->scope.setFingerprint(Arrays.asList(UUID.randomUUID().toString())));
 
         UserFeedback userFeedback = new UserFeedback(sentryId);
         userFeedback.setComments(message);
@@ -240,6 +240,7 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
             this.isRunning = true;
             // TODO any way to save the instance here?
 
+            this.reports = 0;
             if (this.getSentryDsn() != null) this.hub = this.initSentry();
 
             this.preOnEnable();
