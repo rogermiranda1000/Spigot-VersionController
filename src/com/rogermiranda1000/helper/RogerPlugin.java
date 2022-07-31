@@ -180,11 +180,14 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
     }
 
     @Override
-    public void userReport(@Nullable String contact, String message) {
-        SentryId sentryId = this.hub.captureMessage("report-" + UUID.randomUUID());
+    public void userReport(@Nullable String contact, @Nullable String name, String message) {
+        final List<String> fingerprint = new ArrayList<>();
+        fingerprint.add(UUID.randomUUID().toString());
+        SentryId sentryId = this.hub.captureMessage("report", SentryLevel.INFO, (scope)->scope.setFingerprint(fingerprint));
 
         UserFeedback userFeedback = new UserFeedback(sentryId);
         userFeedback.setComments(message);
+        if (name != null) userFeedback.setName(name);
         if (contact != null) userFeedback.setEmail(contact);
         this.hub.captureUserFeedback(userFeedback);
     }

@@ -13,5 +13,5 @@ public interface Reporter {
 
     public void reportException(String err);
 
-    public void userReport(@Nullable String contact, String message);
+    public void userReport(@Nullable String contact, @Nullable String name, String message);
 }
