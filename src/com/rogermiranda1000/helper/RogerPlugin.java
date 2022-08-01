@@ -283,9 +283,11 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
                     try {
                         try {
                             run.run();
-                        } catch (SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
+                        } catch (SecurityException | IllegalAccessException | IllegalArgumentException ex) {
                             System.err.println("Error while overriding " + lis.getClass().getName());
                             throw ex;
+                        }  catch (InvocationTargetException ex) {
+                            throw ex.getCause();
                         }
                     } catch (Throwable ex) {
                         this.reportRepeatedException(ex);
