@@ -159,13 +159,38 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
     @Nullable
     public String getSentryDsn() { return null; }
 
-    @Override
-    public void reportException(Throwable ex) {
-        if (this.hub != null) {
-            this.hub.captureException(ex);
-            this.printConsoleErrorMessage("Error captured:");
+    @Nullable
+    private static StackTraceElement getMyFault(Throwable ex) {
+        // get the first time my package was found
+        for (StackTraceElement stack : ex.getStackTrace()) {
+            if (stack.getClassName().startsWith("com.rogermiranda1000.")) {
+                return stack;
+            }
         }
-        ex.printStackTrace();
+        return null;
+    }
+
+    private void setFingerprint(Scope scope, Throwable ex) {
+        List<String> r = new ArrayList<>();
+        r.add(ex.getClass().getName());
+        r.add(ex.getMessage());
+        StackTraceElement fail = RogerPlugin.getMyFault(ex);
+        if (fail != null) {
+            r.add(fail.getClassName() + ": " + fail.getLineNumber());
+            scope.setFingerprint(r);
+        }
+        // else (my package was not found) -> default scope
+    }
+
+    @Override
+    public void reportException(final Throwable ex) {
+        if (this.hub != null) {
+            this.hub.captureException(ex, (scope)->this.setFingerprint(scope, ex));
+
+            StackTraceElement fault = getMyFault(ex);
+            this.printConsoleErrorMessage("Error captured: " + ex.getMessage() + ((fault == null) ? "" : (" (" + fault.getClassName() + ":" + fault.getLineNumber() + ")")));
+        }
+        else ex.printStackTrace();
     }
 
     private int reports = 0;
@@ -183,9 +208,7 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
 
     @Override
     public void userReport(@Nullable String contact, @Nullable String name, String message) {
-        final List<String> fingerprint = new ArrayList<>();
-        fingerprint.add(UUID.randomUUID().toString());
-        SentryId sentryId = this.hub.captureMessage("report", SentryLevel.INFO, (scope)->scope.setFingerprint(fingerprint));
+        SentryId sentryId = this.hub.captureMessage("report", SentryLevel.INFO, (scope)->scope.setFingerprint(Arrays.asList(UUID.randomUUID().toString())));
 
         UserFeedback userFeedback = new UserFeedback(sentryId);
         userFeedback.setComments(message);
@@ -194,51 +217,56 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
         this.hub.captureUserFeedback(userFeedback);
     }
 
+    private IHub initSentry() {
+        SentryOptions options = new SentryOptions();
+        options.setDsn(this.getSentryDsn());
+
+        // capture 100% of transactions for performance monitoring
+        options.setSampleRate(1.0);
+        options.setTracesSampleRate(1.0);
+
+        options.setAttachServerName(false); // give the user some privacy
+
+        options.setRelease(this.getDescription().getVersion());
+
+        options.setTag("server-version", VersionController.version.toString());
+        options.setTag("spigot", Boolean.toString(!VersionController.isPaper));
+        // TODO attach config file
+        // TODO add plugins using
+
+        /*options.setDebug(true);
+        options.setDiagnosticLevel(SentryLevel.ERROR);*/
+
+        return new Hub(options);
+    }
+
     /**
      * Check for updates, starts the listeners (& commands) and loads CustomBlocks
      */
     @Override
     public void onEnable() {
         try {
-            this.isRunning = true;
             // TODO any way to save the instance here?
 
-            if (this.getSentryDsn() != null) {
-                SentryOptions options = new SentryOptions();
-                options.setDsn(this.getSentryDsn());
-
-                // capture 100% of transactions for performance monitoring
-                options.setSampleRate(1.0);
-                options.setTracesSampleRate(1.0);
-
-                options.setAttachServerName(false); // give the user some privacy
-
-                options.setRelease(this.getDescription().getVersion());
-
-                options.setTag("server-version", VersionController.version.toString());
-                options.setTag("spigot", Boolean.toString(!VersionController.isPaper));
-                // TODO attach config file
-                // TODO add plugins using
-
-                /*options.setDebug(true);
-                options.setDiagnosticLevel(SentryLevel.ERROR);*/
-
-                this.hub = new Hub(options);
-            }
+            this.reports = 0;
+            if (this.getSentryDsn() != null) this.hub = this.initSentry();
 
             this.preOnEnable();
+
+            // TODO abort
 
             if (this.getMetricsID() != null) {
                 this.metrics = new Metrics(this, this.getMetricsID());
                 for (Metrics.CustomChart chart : this.charts) this.metrics.addCustomChart(chart);
             }
 
-            Bukkit.getScheduler().runTaskAsynchronously(this,()->{
+            Bukkit.getScheduler().runTaskAsynchronously(this, () -> {
                 try {
                     String id = this.getPluginID();
                     if (id != null) {
                         String version = VersionChecker.getVersion(id);
-                        if (VersionChecker.isLower(this.getDescription().getVersion(), version)) this.printConsoleWarningMessage("v" + version + " is now available! You should consider updating the plugin.");
+                        if (VersionChecker.isLower(this.getDescription().getVersion(), version))
+                            this.printConsoleWarningMessage("v" + version + " is now available! You should consider updating the plugin.");
                     }
                 } catch (IOException e) {
                     this.printConsoleWarningMessage("Can't check for updates.");
@@ -255,9 +283,11 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
                     try {
                         try {
                             run.run();
-                        } catch (SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
+                        } catch (SecurityException | IllegalAccessException | IllegalArgumentException ex) {
                             System.err.println("Error while overriding " + lis.getClass().getName());
                             throw ex;
+                        }  catch (InvocationTargetException ex) {
+                            throw ex.getCause();
                         }
                     } catch (Throwable ex) {
                         this.reportRepeatedException(ex);
@@ -281,14 +311,23 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
             }
 
             this.postOnEnable();
+
+            this.isRunning = true;
+        } catch (SoftCriticalException ex) {
+            this.printConsoleErrorMessage(ex.getMessage());
+            getServer().getPluginManager().disablePlugin(this); // error in the start -> kill
+        } catch (SoftException ex) {
+            this.printConsoleErrorMessage(ex.getMessage());
         } catch (Throwable ex) {
             this.reportException(ex);
+            getServer().getPluginManager().disablePlugin(this); // error in the start -> kill
         }
     }
 
     @Override
     public void onDisable() {
         try {
+            if (!this.isRunning) return; // killed onStart
             this.isRunning = false;
 
             this.preOnDisable();
