@@ -1,6 +1,5 @@
 package com.rogermiranda1000.helper;
 
-import org.apache.commons.lang.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.craftbukkit.libs.jline.internal.Nullable;
@@ -60,6 +59,10 @@ public class CustomCommand {
         this.argLength = (byte) argLength;
     }
 
+    private static int countSpaces(String str) {
+        return str.length() - str.replaceAll(" ", "").length();
+    }
+
     /**
      * Constructor
      * @param command Regex to match the command
@@ -68,7 +71,7 @@ public class CustomCommand {
      * @param description Command show + description. If null it takes the command itself
      */
     public CustomCommand(String command, @Nullable String permission, boolean consoleUsage, @Nullable String usage, @Nullable String description, MatchCommandNotifier notifier) throws PatternSyntaxException {
-        this(command, Pattern.compile("(?<!\\\\)\\.").matcher(command).find() ? -1 : StringUtils.countMatches(command, " "), permission, consoleUsage, usage, description, notifier);
+        this(command, Pattern.compile("(?<!\\\\)\\.").matcher(command).find() ? -1 : countSpaces(command), permission, consoleUsage, usage, description, notifier);
 
         String []pattern = command.split(" ");
         this.partialPattern = new Pattern[pattern.length];
