@@ -76,11 +76,7 @@ public class VersionController extends ItemManager implements BlockManager, Part
      * @return Paper (true), Spigot (false)
      */
     private static boolean getMCPaper() {
-        try {
-            Class.forName("org.spigotmc.CustomTimingsHandler"); // a package from SPIGOT (not paper)
-            return false;
-        } catch (ClassNotFoundException ignored) { }
-        return true;
+        return Bukkit.getName().equals("Paper");
     }
 
     public static VersionController get() {
