@@ -1,5 +1,7 @@
 package com.rogermiranda1000.versioncontroller.entities;
 
+import com.rogermiranda1000.versioncontroller.Version;
+import com.rogermiranda1000.versioncontroller.VersionController;
 import org.bukkit.entity.Entity;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.util.Vector;
@@ -21,6 +23,6 @@ public class EntityPaper implements EntityManager {
 
     @Override
     public BoundingBox getBoundingBox(Entity e) {
-        return new EntitySpigotPre14().getBoundingBox(e);
+        return ((VersionController.version.compareTo(Version.MC_1_14) < 0) ? new EntitySpigotPre14() : new EntitySpigotPost14()).getBoundingBox(e);
     }
 }
