@@ -346,28 +346,31 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
 
     @Override
     public void onDisable() {
-        try {
-            if (!this.isRunning) return; // killed onStart
-            this.isRunning = false;
+        // killed onStart?
+        if (this.isRunning) {
+            try {
+                this.isRunning = false;
 
-            this.preOnDisable();
+                this.preOnDisable();
 
-            // call disable functions
-            for (CustomBlock<?> cb : this.customBlocks) {
-                try {
-                    cb.save();
-                } catch (IOException e) {
-                    this.printConsoleErrorMessage("Error while disabling custom block"); // TODO get more info
-                    e.printStackTrace();
+                // call disable functions
+                for (CustomBlock<?> cb : this.customBlocks) {
+                    try {
+                        cb.save();
+                    } catch (IOException e) {
+                        this.printConsoleErrorMessage("Error while disabling custom block"); // TODO get more info
+                        e.printStackTrace();
+                    }
                 }
-            }
 
-            this.postOnDisable();
-        } catch (Throwable ex) {
-            this.reportException(ex);
+                this.postOnDisable();
+            } catch (Throwable ex) {
+                this.reportException(ex);
+            }
         }
 
         if (this.hub != null) {
+            this.hub.flush(15000);
             this.hub.close();
             this.hub = null;
         }
