@@ -7,10 +7,14 @@ import org.jetbrains.annotations.NotNull;
 
 public interface EntityManager {
     @NotNull
-    Vector getVelocity(Entity e);
+    public default Vector getVelocity(Entity e) {
+        return e.getVelocity();
+    }
 
     @NotNull
-    Vector getVelocity(PlayerMoveEvent e);
+    public default Vector getVelocity(PlayerMoveEvent e) {
+        return this.getVelocity(e.getPlayer());
+    }
 
-    BoundingBox getBoundingBox(Entity e);
+    public BoundingBox getBoundingBox(Entity e);
 }

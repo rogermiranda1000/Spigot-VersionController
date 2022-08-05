@@ -2,27 +2,12 @@ package com.rogermiranda1000.versioncontroller.entities;
 
 import com.rogermiranda1000.versioncontroller.VersionController;
 import org.bukkit.entity.Entity;
-import org.bukkit.event.player.PlayerMoveEvent;
-import org.bukkit.util.Vector;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 public class EntitySpigotPre14 implements EntityManager {
-    @Override
-    public @NotNull Vector getVelocity(Entity e) {
-        return e.getVelocity();
-    }
-
-    @Override
-    public @NotNull Vector getVelocity(PlayerMoveEvent e) {
-        return e.getPlayer().getVelocity();
-    }
-
-    /* get height / width methods */
-
     @Nullable
     private static final Class<?> craftEntityClass = EntitySpigotPre14.getCraftEntityClass(),
                                 entityClass = EntitySpigotPre14.getEntityClass(),

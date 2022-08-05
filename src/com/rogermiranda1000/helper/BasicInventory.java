@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 
 public abstract class BasicInventory implements Listener {
-    private final Plugin plugin;
+    private final RogerPlugin plugin;
     private final boolean cancelAllEvents;
     private Inventory inv;
     private final ArrayList<HumanEntity> playersWithOpenInventory;
@@ -23,7 +23,7 @@ public abstract class BasicInventory implements Listener {
     /**
      * It initializes the players with the current inventory opened list
      */
-    public BasicInventory(Plugin plugin, boolean cancelAllEvents) {
+    public BasicInventory(RogerPlugin plugin, boolean cancelAllEvents) {
         this.plugin = plugin;
         this.cancelAllEvents = cancelAllEvents;
         this.playersWithOpenInventory = new ArrayList<>();
@@ -48,7 +48,7 @@ public abstract class BasicInventory implements Listener {
      * It registers the inventories event (click & close)
      */
     public void registerEvent() {
-        this.plugin.getServer().getPluginManager().registerEvents(this, this.plugin);
+        this.plugin.addListener(this);
     }
 
     public void openInventory(HumanEntity p) {

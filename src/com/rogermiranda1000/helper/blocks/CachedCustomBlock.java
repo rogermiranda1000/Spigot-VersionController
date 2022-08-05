@@ -64,24 +64,11 @@ public abstract class CachedCustomBlock<T> extends CustomBlock<T> {
     }
 
     @Override
-    public void load() throws IOException {
-        super.load();
-
-        super.getAllBlocks(e -> {
-            List<Location> s = this.cache.get(e.getKey());
-            if (s == null) {
-                s = new ArrayList<>();
-                this.cache.put(e.getKey(), s);
-            }
-
-            s.add(e.getValue());
-        });
-    }
-
-    @Override
     synchronized public void getAllBlocks(final Consumer<CustomBlocksEntry<T>> blockConsumer) {
         for (Map.Entry<T,List<Location>> e : this.cache.entrySet()) {
-            for (Location loc : e.getValue()) blockConsumer.accept(new CustomBlocksEntry<>(e.getKey(), loc));
+            for (Location loc : e.getValue()) {
+                blockConsumer.accept(new CustomBlocksEntry<>(e.getKey(), loc));
+            }
         }
     }
 

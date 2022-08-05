@@ -72,18 +72,24 @@ public class SpigotEventOverrider {
     }
 
     public static void wrapListeners(final @NotNull Plugin plugin, Listener lis, final OverridedEvent wrapper) {
-        HandlerList.unregisterAll(lis);
+        //HandlerList.unregisterAll(lis);
 
-        for (final Method m: lis.getClass().getDeclaredMethods()) {
-            final Class<? extends Event> type = SpigotEventOverrider.getEventType(m);
-            if (type == null) continue; // not an event
-            EventHandler eventHandler = m.getAnnotation(EventHandler.class);
+        Class<?> c = lis.getClass();
+        while (c != null) {
+            for (final Method m : c.getDeclaredMethods()) {
+                final Class<? extends Event> type = SpigotEventOverrider.getEventType(m);
+                if (type == null) continue; // not an event
+                EventHandler eventHandler = m.getAnnotation(EventHandler.class);
 
-            Bukkit.getPluginManager().registerEvent(type, lis, eventHandler.priority(), (l, e) -> wrapper.onEvent(() -> {
-                try {
-                    m.invoke(l, type.cast(e));
-                } catch (ClassCastException ignore) {}
-            }), plugin, eventHandler.ignoreCancelled());
+                Bukkit.getPluginManager().registerEvent(type, lis, eventHandler.priority(), (l, e) -> wrapper.onEvent(() -> {
+                    try {
+                        m.invoke(l, type.cast(e));
+                    } catch (ClassCastException ignore) {
+                    }
+                }), plugin, eventHandler.ignoreCancelled());
+            }
+
+            c = c.getSuperclass();
         }
     }
 
