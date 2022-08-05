@@ -267,6 +267,8 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
             this.reports = 0;
             if (this.getSentryDsn() != null) this.hub = this.initSentry();
 
+            this.clearCustomBlocks();
+
             this.preOnEnable();
 
             // TODO abort
@@ -288,8 +290,6 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
                     this.printConsoleWarningMessage("Can't check for updates.");
                 }
             });
-
-            this.clearCustomBlocks();
 
             // get all the events
             List<Listener> listeners = new ArrayList<>(Arrays.asList(this.listeners));
