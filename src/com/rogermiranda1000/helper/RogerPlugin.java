@@ -274,6 +274,8 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
                 }
             });
 
+            this.clearCustomBlocks();
+
             // get all the events
             List<Listener> listeners = new ArrayList<>(Arrays.asList(this.listeners));
             for (CustomBlock<?> cb : this.customBlocks) listeners.addAll(cb.register());
