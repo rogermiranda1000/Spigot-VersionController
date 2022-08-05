@@ -7,6 +7,7 @@ import com.rogermiranda1000.versioncontroller.Version;
 import com.rogermiranda1000.versioncontroller.VersionChecker;
 import com.rogermiranda1000.versioncontroller.VersionController;
 import io.sentry.*;
+import io.sentry.protocol.Message;
 import io.sentry.protocol.SentryId;
 import net.md_5.bungee.api.ChatColor;
 import org.bukkit.Bukkit;
@@ -183,9 +184,11 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
     }
 
     @Override
-    public void reportException(final Throwable ex) {
+    public void reportException(final Throwable ex, Attachment ...attachments) {
         if (this.hub != null) {
-            this.hub.captureException(ex, (scope)->this.setFingerprint(scope, ex));
+            Hint hint = new Hint();
+            for (Attachment attachment : attachments) hint.addAttachment(attachment);
+            this.hub.captureException(ex, hint, (scope)->this.setFingerprint(scope, ex));
 
             StackTraceElement fault = getMyFault(ex);
             this.printConsoleErrorMessage("Error captured: " + ex.getMessage() + ((fault == null) ? "" : (" (" + fault.getClassName() + ":" + fault.getLineNumber() + ")")));
@@ -201,9 +204,21 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
     }
 
     @Override
-    public void reportException(String err) {
-        if (this.hub != null) this.hub.captureMessage(err);
-        System.err.println(err);
+    public void reportException(String err, Attachment ...attachments) {
+        if (this.hub != null) {
+            SentryEvent event = new SentryEvent();
+            Message sentryMessage = new Message();
+            sentryMessage.setFormatted(err);
+            event.setMessage(sentryMessage);
+            event.setLevel(SentryLevel.ERROR);
+
+            Hint hint = new Hint();
+            for (Attachment attachment : attachments) hint.addAttachment(attachment);
+
+            this.hub.captureEvent(event, hint);
+            this.printConsoleErrorMessage("Error captured: " + err);
+        }
+        else this.printConsoleErrorMessage(err);
     }
 
     @Override
@@ -281,22 +296,7 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
             for (CustomBlock<?> cb : this.customBlocks) listeners.addAll(cb.register());
 
             // register the events
-            for (Listener lis : listeners) {
-                SpigotEventOverrider.wrapListeners(this, lis, (run) -> {
-                    try {
-                        try {
-                            run.run();
-                        } catch (SecurityException | IllegalAccessException | IllegalArgumentException ex) {
-                            System.err.println("Error while overriding " + lis.getClass().getName());
-                            throw ex;
-                        }  catch (InvocationTargetException ex) {
-                            throw ex.getCause();
-                        }
-                    } catch (Throwable ex) {
-                        this.reportRepeatedException(ex);
-                    }
-                });
-            }
+            for (Listener lis : listeners) this.addListener(lis);
 
             if (this.commands.length > 0 && VersionController.version.compareTo(Version.MC_1_10) >= 0) {
                 // if MC > 10 we can send hints onTab
@@ -325,6 +325,23 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
             this.reportException(ex);
             getServer().getPluginManager().disablePlugin(this); // error in the start -> kill
         }
+    }
+
+    public void addListener(Listener lis) {
+        SpigotEventOverrider.wrapListeners(this, lis, (run) -> {
+            try {
+                try {
+                    run.run();
+                } catch (SecurityException | IllegalAccessException | IllegalArgumentException ex) {
+                    System.err.println("Error while overriding " + lis.getClass().getName());
+                    throw ex;
+                }  catch (InvocationTargetException ex) {
+                    throw ex.getCause();
+                }
+            } catch (Throwable ex) {
+                this.reportRepeatedException(ex);
+            }
+        });
     }
 
     @Override
