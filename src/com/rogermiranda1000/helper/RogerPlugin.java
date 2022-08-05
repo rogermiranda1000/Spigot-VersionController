@@ -208,6 +208,7 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
 
     @Override
     public void userReport(@Nullable String contact, @Nullable String name, String message) {
+        if (this.hub == null) return;
         SentryId sentryId = this.hub.captureMessage("report", SentryLevel.INFO, (scope)->scope.setFingerprint(Arrays.asList(UUID.randomUUID().toString())));
 
         UserFeedback userFeedback = new UserFeedback(sentryId);
@@ -347,8 +348,10 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
             this.reportException(ex);
         }
 
-        this.hub.close();
-        this.hub = null;
+        if (this.hub != null) {
+            this.hub.close();
+            this.hub = null;
+        }
     }
 
     public void preOnEnable() {}
