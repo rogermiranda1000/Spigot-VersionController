@@ -164,7 +164,9 @@ public abstract class CustomBlock<T> implements Listener {
             scanner.close();
 
             CustomBlocksEntry<T> []blocks = BasicBlock.getEntries(this.gson.fromJson(sb.toString(), BasicBlock[].class), this.storeFunctions.loadName());
-            for (CustomBlocksEntry<T> e : blocks) this.placeBlockArtificially(e);
+            for (CustomBlocksEntry<T> e : blocks) {
+                if (e != null) this.placeBlockArtificially(e);
+            }
         } catch (JsonSyntaxException ex) {
             throw new IOException(ex.getMessage());
         } catch (FileNotFoundException ignore) {
