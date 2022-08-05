@@ -271,8 +271,6 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
 
             this.preOnEnable();
 
-            // TODO abort
-
             if (this.getMetricsID() != null) {
                 this.metrics = new Metrics(this, this.getMetricsID());
                 for (Metrics.CustomChart chart : this.charts) this.metrics.addCustomChart(chart);
