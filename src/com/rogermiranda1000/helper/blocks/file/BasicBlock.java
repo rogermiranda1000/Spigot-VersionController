@@ -32,7 +32,7 @@ public class BasicBlock {
         for (int i = 0; i < r.length; i++) {
             BasicBlock o = basicBlocks[i];
             T object = loader.apply(o.object);
-            if (object == null) throw new InvalidParameterException("Loader returns null while processing " + o.toString());
+            if (object == null) /*throw new InvalidParameterException("Loader returns null while processing " + o.toString())*/ continue;
             r[i] = new CustomBlocksEntry<>(object, new Location(Bukkit.getWorld(o.world), (double)o.x, (double)o.y, (double)o.z));
         }
         return r;
