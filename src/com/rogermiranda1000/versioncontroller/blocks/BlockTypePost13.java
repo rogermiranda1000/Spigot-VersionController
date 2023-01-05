@@ -115,7 +115,7 @@ public class BlockTypePost13 extends BlockType {
      */
     private static BlockData loadBlockData(ItemStack item) throws IllegalArgumentException {
         List<String> lore;
-        if (item.getItemMeta() == null || (lore = item.getItemMeta().getLore()) == null || !lore.get(0).equals("-- BlockData --")) return item.getType().createBlockData(); // default block
+        if (item.getItemMeta() == null || (lore = item.getItemMeta().getLore()) == null || lore.size() == 0 || !lore.get(0).equals("-- BlockData --")) return item.getType().createBlockData(); // default block
 
         StringBuilder sb = new StringBuilder();
         sb.append("minecraft:");

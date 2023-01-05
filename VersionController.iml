@@ -22,5 +22,7 @@
     <orderEntry type="library" name="worldguard-bukkit-7.0.0" level="project" />
     <orderEntry type="library" name="io.sentry" level="project" />
     <orderEntry type="library" name="Residence5.0.1.7" level="project" />
+    <orderEntry type="library" name="Residence5.1.0.1" level="project" />
+    <orderEntry type="library" name="jetbrains.annotations" level="project" />
   </component>
 </module>
