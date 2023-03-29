@@ -65,7 +65,7 @@ public class BlockTypePost13 extends BlockType {
         ItemStack item = new ItemStack(this.data.getMaterial());
 
         List<String> data;
-        if (verbose && (data = BlockTypePost13.getNonStandardDataList(this.data)).size() > 0) BlockTypePost13.saveBlockData(item, data);
+        if (verbose && (data = BlockTypePost13.getNonStandardDataList(this.data)).size() > 0) item = BlockTypePost13.saveBlockData(this.data.getMaterial(), data);
 
         return item;
     }
@@ -78,14 +78,29 @@ public class BlockTypePost13 extends BlockType {
         return match.split(",");
     }
 
-    private static List<String> getNonStandardDataList(BlockData data) {
+    private static List<String> getNonStandardDataList(BlockData data) throws IllegalArgumentException {
         String []current = BlockTypePost13.getDataList(data),
                 original = BlockTypePost13.getDataList(data.getMaterial().createBlockData());
         ArrayList<String> r = new ArrayList<>();
+        if (!isItem(data)) {
+            // we can't give the block as an item
+            r.add(getBlockDataMaterial(data.getAsString()));
+        }
         for (String e : current) {
             if (Arrays.stream(original).noneMatch(e::equals)) r.add(e);
         }
         return r;
+    }
+
+    private static String getBlockDataMaterial(String blockData) throws IllegalArgumentException {
+        Pattern p = Pattern.compile("minecraft:([^\\[]+)"); // regex to get the block name
+        Matcher m = p.matcher(blockData);
+        if (!m.find()) throw new IllegalArgumentException("Can't get block nor item for " + blockData);
+        return m.group(1);
+    }
+
+    private static boolean isItem(BlockData bd) throws IllegalArgumentException {
+        return Material.valueOf(getBlockDataMaterial(bd.getAsString()).toUpperCase()).isItem();
     }
 
     public boolean defaultMaterial() {
@@ -94,17 +109,24 @@ public class BlockTypePost13 extends BlockType {
 
     /**
      * Save the BlockData in the item's lore
-     * @param item Item to save the info
+     * @param expectedItemMaterial Material expected of the item to save the info
      * @param data BlockData info
+     * @return Re-created item, this time with the appropriate lore data
      */
-    private static void saveBlockData(ItemStack item, List<String> data) {
+    private static ItemStack saveBlockData(Material expectedItemMaterial, List<String> data) {
         data.add(0, "-- BlockData --");
         data.add("-------------");
 
+        // if the first (now second) row doesn't contain a '=' it means that it specifies the item because `expectedItemMaterial`
+        // is not a givable item
+        ItemStack r = data.get(1).contains("=") ? new ItemStack(expectedItemMaterial) : new ItemStack(Material.STONE);
+
         // add lore
-        ItemMeta meta = item.getItemMeta();
+        ItemMeta meta = r.getItemMeta();
         meta.setLore(data);
-        item.setItemMeta(meta);
+        r.setItemMeta(meta);
+
+        return r;
     }
 
     /**
@@ -115,13 +137,14 @@ public class BlockTypePost13 extends BlockType {
      */
     private static BlockData loadBlockData(ItemStack item) throws IllegalArgumentException {
         List<String> lore;
-        if (item.getItemMeta() == null || (lore = item.getItemMeta().getLore()) == null || !lore.get(0).equals("-- BlockData --")) return item.getType().createBlockData(); // default block
+        if (item.getItemMeta() == null || (lore = item.getItemMeta().getLore()) == null || lore.size() == 0 || !lore.get(0).equals("-- BlockData --")) return item.getType().createBlockData(); // default block
 
         StringBuilder sb = new StringBuilder();
         sb.append("minecraft:");
-        sb.append(item.getType().name().toLowerCase());
+        boolean blockTypeOnLore = (lore.size() > 2) && !lore.get(1).contains("=");
+        sb.append(blockTypeOnLore ? lore.get(1) : item.getType().name().toLowerCase());
         sb.append('[');
-        for (int i = 1; i < lore.size() && !lore.get(i).startsWith("--"); i++) sb.append(lore.get(i) + ",");
+        for (int i = blockTypeOnLore ? 2 : 1; i < lore.size() && !lore.get(i).startsWith("--"); i++) sb.append(lore.get(i) + ",");
         sb.setLength(sb.length()-1); // remove last ','
         sb.append(']');
         return Bukkit.createBlockData(sb.toString());
