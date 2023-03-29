@@ -9,6 +9,7 @@ import com.github.davidmoten.rtreemulti.internal.EntryDefault;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
+import com.google.gson.stream.JsonReader;
 import com.rogermiranda1000.helper.RogerPlugin;
 import com.rogermiranda1000.helper.blocks.file.BasicBlock;
 import com.rogermiranda1000.helper.blocks.file.BasicLocation;
@@ -27,10 +28,7 @@ import org.bukkit.event.block.BlockEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -157,13 +155,8 @@ public abstract class CustomBlock<T> implements Listener {
     public void load() throws IOException {
         if (!this.willSave()) return;
 
-        try {
-            StringBuilder sb = new StringBuilder();
-            Scanner scanner = new Scanner(this.getCustomBlockFile());
-            while (scanner.hasNextLine()) sb.append(scanner.nextLine());
-            scanner.close();
-
-            CustomBlocksEntry<T> []blocks = BasicBlock.getEntries(this.gson.fromJson(sb.toString(), BasicBlock[].class), this.storeFunctions.loadName());
+        try (JsonReader reader = new JsonReader(new FileReader(this.getCustomBlockFile()))) {
+            CustomBlocksEntry<T> []blocks = BasicBlock.getEntries(this.gson.fromJson(reader, BasicBlock[].class), this.storeFunctions.loadName());
             for (CustomBlocksEntry<T> e : blocks) {
                 if (e != null) this.placeBlockArtificially(e);
             }
