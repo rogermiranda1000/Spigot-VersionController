@@ -1,4 +1,4 @@
-# VersionController
+# VersionController [![CodeFactor](https://www.codefactor.io/repository/github/rogermiranda1000/spigot-versioncontroller/badge)](https://www.codefactor.io/repository/github/rogermiranda1000/spigot-versioncontroller)
 A helper for spigot plugins
 
 ## Dependencies
