@@ -31,6 +31,9 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
     public final String clearPrefix = ChatColor.GOLD.toString() + ChatColor.BOLD + "[" + this.getName() + "] " + ChatColor.GREEN,
             errorPrefix = ChatColor.GOLD.toString() + ChatColor.BOLD + "[" + this.getName() + "] " + ChatColor.RED;
 
+    public String getClearPrefix() { return this.clearPrefix; }
+    public String getErrorPrefix() { return this.errorPrefix; }
+
     private final Listener []listeners;
     private CustomCommand []commands;
     private final Metrics.CustomChart []charts;
@@ -394,7 +397,7 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
                         continue;
 
                     case NO_PERMISSIONS:
-                        sender.sendMessage(this.errorPrefix + this.noPermissionsMessage);
+                        sender.sendMessage(this.getErrorPrefix() + this.noPermissionsMessage);
                         break;
                     case MATCH:
                         command.notifier.onCommand(sender, args);
@@ -403,7 +406,7 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
                         sender.sendMessage("Don't use this command in console.");
                         break;
                     case INVALID_LENGTH:
-                        sender.sendMessage(this.errorPrefix +"Unknown command. Use " + ChatColor.GOLD + "/" + this.getName().toLowerCase() + " ?");
+                        sender.sendMessage(this.getErrorPrefix() +"Unknown command. Use " + ChatColor.GOLD + "/" + this.getName().toLowerCase() + " ?");
                         break;
                     default:
                         this.printConsoleErrorMessage("Unknown response to command");
@@ -412,7 +415,7 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
                 return true;
             }
 
-            sender.sendMessage(this.errorPrefix + this.unknownMessage);
+            sender.sendMessage(this.getErrorPrefix() + this.unknownMessage);
             this.commands[0].notifier.onCommand(sender, new String[]{}); // '?' command
             return true;
         } catch (Throwable ex) {
