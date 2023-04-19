@@ -22,10 +22,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor, Reporter {
     public final String clearPrefix = ChatColor.GOLD.toString() + ChatColor.BOLD + "[" + this.getName() + "] " + ChatColor.GREEN,
@@ -34,7 +31,7 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
     public String getClearPrefix() { return this.clearPrefix; }
     public String getErrorPrefix() { return this.errorPrefix; }
 
-    private final Listener []listeners;
+    private final HashMap<Class<? extends Listener>,Listener> listeners;
     private CustomCommand []commands;
     private final Metrics.CustomChart []charts;
     private final List<CustomBlock<?>> customBlocks;
@@ -66,7 +63,9 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
         this.isRunning = false;
         this.commands = commands;
         this.charts = charts;
-        this.listeners = listeners; // Listener... is the same than Listener[]
+
+        this.listeners = new HashMap<>();
+        for (Listener lis : listeners) this.listeners.put(lis.getClass(), lis);
 
         this.noPermissionsMessage = "You don't have the permissions to do that.";
     }
@@ -293,7 +292,7 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
             });
 
             // get all the events
-            List<Listener> listeners = new ArrayList<>(Arrays.asList(this.listeners));
+            List<Listener> listeners = new ArrayList<>(this.listeners.values());
             for (CustomBlock<?> cb : this.customBlocks) listeners.addAll(cb.register());
 
             // register the events
@@ -386,6 +385,10 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
         for (CustomBlock<?> cb : this.customBlocks) {
             cb.removeAllBlocksArtificially();
         }
+    }
+
+    public <T extends Listener> T getListener(Class<T> cls) {
+        return cls.cast(this.listeners.get(cls)); // we save the class and its instance
     }
 
     @Override
