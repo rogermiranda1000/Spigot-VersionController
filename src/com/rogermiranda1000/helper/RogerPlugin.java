@@ -3,6 +3,9 @@ package com.rogermiranda1000.helper;
 import com.rogermiranda1000.helper.blocks.CustomBlock;
 import com.rogermiranda1000.helper.metrics.Metrics;
 import com.rogermiranda1000.helper.reflection.SpigotEventOverrider;
+import com.rogermiranda1000.helper.worldguard.RegionDelimiter;
+import com.rogermiranda1000.helper.worldguard.WorldGuardManager;
+import com.rogermiranda1000.helper.worldguard.WorldGuardPre12;
 import com.rogermiranda1000.versioncontroller.Version;
 import com.rogermiranda1000.versioncontroller.VersionChecker;
 import com.rogermiranda1000.versioncontroller.VersionController;
@@ -17,6 +20,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.craftbukkit.libs.jline.internal.Nullable;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,6 +40,7 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
     private final Metrics.CustomChart []charts;
     private final List<CustomBlock<?>> customBlocks;
     private String noPermissionsMessage, unknownMessage;
+    protected ChainedObject<RegionDelimiter> regionDelimiter;
 
     @Nullable
     private Metrics metrics;
@@ -66,6 +71,8 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
 
         this.listeners = new HashMap<>();
         for (Listener lis : listeners) this.listeners.put(lis.getClass(), lis);
+
+        this.regionDelimiter = new ChainedObject<>();
 
         this.noPermissionsMessage = "You don't have the permissions to do that.";
     }
@@ -297,6 +304,14 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
 
             // register the events
             for (Listener lis : listeners) this.addListener(lis);
+
+            // instantiate WG manager
+            try {
+                Plugin worldguard = Bukkit.getPluginManager().getPlugin("WorldGuard");
+                if (worldguard != null) this.regionDelimiter.add((VersionController.version.compareTo(Version.MC_1_12) < 0) ? new WorldGuardPre12() : new WorldGuardManager());
+            } catch (Exception ex) {
+                this.reportException(ex); // rushed feature; there may be problems
+            }
 
             if (this.commands.length > 0 && VersionController.version.compareTo(Version.MC_1_10) >= 0) {
                 // if MC > 10 we can send hints onTab
