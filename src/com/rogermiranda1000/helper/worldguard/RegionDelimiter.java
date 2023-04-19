@@ -19,7 +19,7 @@ public interface RegionDelimiter {
      * @param flagName Flag name
      * @param defaultValue Default value
      */
-    void setupFlag(String flagName, boolean defaultValue);
+    /*void setupFlag(String flagName, boolean defaultValue);
 
-    Boolean getFlagValue(Location target, String flag, BinaryOperator<Boolean> reduce);
+    Boolean getFlagValue(Location target, String flag, BinaryOperator<Boolean> reduce);*/
 }

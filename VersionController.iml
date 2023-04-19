@@ -25,5 +25,6 @@
     <orderEntry type="library" name="jetbrains.annotations" level="project" />
     <orderEntry type="library" name="io.sentry" level="project" />
     <orderEntry type="library" name="worldedit-bukkit-7.0.0" level="project" />
+    <orderEntry type="library" name="worldguard-6.2" level="project" />
   </component>
 </module>

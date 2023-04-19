@@ -5,6 +5,7 @@ A helper for spigot plugins
 - spigot 1.16.5
 - [Residence](https://zrips.net/Residence/)
 - [WorldGuard 7.0.0](https://dev.bukkit.org/projects/worldguard/files/2723606)
+- [WorldGuard 6.2](https://dev.bukkit.org/projects/worldguard/files/956770)
 - [WorldEdit 7.0.0](https://dev.bukkit.org/projects/worldedit/files/2723275)
 - Maven's `org.jetbrains:annotations:LATEST`
 - Maven's `com.github.davidmoten:rtree-multi:LATEST` (extract with .jar)

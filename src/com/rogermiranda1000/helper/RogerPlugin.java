@@ -3,9 +3,9 @@ package com.rogermiranda1000.helper;
 import com.rogermiranda1000.helper.blocks.CustomBlock;
 import com.rogermiranda1000.helper.metrics.Metrics;
 import com.rogermiranda1000.helper.reflection.SpigotEventOverrider;
-import com.rogermiranda1000.helper.worldguard.NoManager;
 import com.rogermiranda1000.helper.worldguard.RegionDelimiter;
 import com.rogermiranda1000.helper.worldguard.WorldGuardManager;
+import com.rogermiranda1000.helper.worldguard.WorldGuardPre12;
 import com.rogermiranda1000.versioncontroller.Version;
 import com.rogermiranda1000.versioncontroller.VersionChecker;
 import com.rogermiranda1000.versioncontroller.VersionController;
@@ -306,8 +306,12 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
             for (Listener lis : listeners) this.addListener(lis);
 
             // instantiate WG manager
-            Plugin worldguard = Bukkit.getPluginManager().getPlugin("WorldGuard");
-            if (worldguard != null) this.regionDelimiter.add(new WorldGuardManager());
+            try {
+                Plugin worldguard = Bukkit.getPluginManager().getPlugin("WorldGuard");
+                if (worldguard != null) this.regionDelimiter.add((VersionController.version.compareTo(Version.MC_1_12) < 0) ? new WorldGuardPre12() : new WorldGuardManager());
+            } catch (Exception ex) {
+                this.reportException(ex); // rushed feature; there may be problems
+            }
 
             if (this.commands.length > 0 && VersionController.version.compareTo(Version.MC_1_10) >= 0) {
                 // if MC > 10 we can send hints onTab

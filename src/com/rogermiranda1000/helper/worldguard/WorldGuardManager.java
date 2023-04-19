@@ -5,8 +5,6 @@ import com.sk89q.worldguard.WorldGuard;
 import com.sk89q.worldguard.protection.ApplicableRegionSet;
 import com.sk89q.worldguard.protection.flags.Flag;
 import com.sk89q.worldguard.protection.flags.StateFlag;
-import com.sk89q.worldguard.protection.flags.registry.FlagConflictException;
-import com.sk89q.worldguard.protection.flags.registry.FlagRegistry;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import com.sk89q.worldguard.protection.regions.RegionContainer;
 import org.bukkit.Location;
@@ -32,7 +30,7 @@ public class WorldGuardManager implements RegionDelimiter {
         return false;
     }
 
-    @Override
+    /*@Override
     public void setupFlag(String flagName, boolean defaultValue) {
         FlagRegistry registry = WorldGuard.getInstance().getFlagRegistry();
         try {
@@ -66,5 +64,5 @@ public class WorldGuardManager implements RegionDelimiter {
             else ret = reduce.apply(ret, stateValue);
         }
         return ret;
-    }
+    }*/
 }
