@@ -74,4 +74,17 @@ public class BlockTypePre13 extends BlockType {
         item.setItemMeta(meta);
         return item;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof BlockTypePre13)) return false;
+        BlockTypePre13 that = (BlockTypePre13)o;
+
+        if (this == o) return true;
+        Material m1 = this.type.getType(),
+                m2 = that.type.getType();
+        short subId1 = this.type.getDurability(),
+                subId2 = that.type.getDurability();
+        return m1.equals(m2) && subId1 == subId2;
+    }
 }

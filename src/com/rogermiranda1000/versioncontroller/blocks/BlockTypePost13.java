@@ -149,4 +149,12 @@ public class BlockTypePost13 extends BlockType {
         sb.append(']');
         return Bukkit.createBlockData(sb.toString());
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof BlockTypePost13)) return false;
+
+        if (this == o) return true;
+        return this.data.matches(((BlockTypePost13)o).data);
+    }
 }
