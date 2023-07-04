@@ -13,9 +13,11 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class BlockTypePre13 extends BlockType {
     private final ItemStack type;
+    private final int hash;
 
     @Nullable
     private static final Method setTypeMethod = BlockTypePre13.getSetTypeMethod();
@@ -37,6 +39,8 @@ public class BlockTypePre13 extends BlockType {
             String []data = lore.get(1).split(":");
             this.type = new ItemStack(Material.valueOf(data[0]), 1, Short.parseShort(data[1]));
         }
+
+        this.hash = Objects.hash(this.type.getType().ordinal(), this.type.getDurability()); // TODO as the type number is (most likely) <2^16, perform the hash by shifting bits
     }
 
     @Override
@@ -86,5 +90,10 @@ public class BlockTypePre13 extends BlockType {
         short subId1 = this.type.getDurability(),
                 subId2 = that.type.getDurability();
         return m1.equals(m2) && subId1 == subId2;
+    }
+
+    @Override
+    public int hashCode() {
+        return this.hash;
     }
 }

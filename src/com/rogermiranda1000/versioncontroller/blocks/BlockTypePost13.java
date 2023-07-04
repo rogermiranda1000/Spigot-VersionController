@@ -17,6 +17,7 @@ import java.util.regex.Pattern;
 public class BlockTypePost13 extends BlockType {
     private static final Pattern blockDataData = Pattern.compile("minecraft:[^\\[]+(\\[(.+)\\])?");
     private final BlockData data;
+    private final int hash;
 
     public BlockTypePost13(ItemStack type) {
         BlockData data;
@@ -27,10 +28,14 @@ public class BlockTypePost13 extends BlockType {
             data = type.getType().createBlockData();
         }
         this.data = data;
+
+        this.hash = this.data.getMaterial().ordinal(); // TODO there will be collisions between different BlockData of the same type
     }
 
     public BlockTypePost13(Block block) {
         this.data = block.getBlockData().clone();
+
+        this.hash = this.data.getMaterial().ordinal(); // TODO there will be collisions between different BlockData of the same type
     }
 
     public BlockTypePost13(String str) throws IllegalArgumentException {
@@ -43,6 +48,8 @@ public class BlockTypePost13 extends BlockType {
             data = mat.createBlockData();
         }
         this.data = data;
+
+        this.hash = this.data.getMaterial().ordinal(); // TODO there will be collisions between different BlockData of the same type
     }
 
     @Override
@@ -156,5 +163,10 @@ public class BlockTypePost13 extends BlockType {
 
         if (this == o) return true;
         return this.data.matches(((BlockTypePost13)o).data);
+    }
+
+    @Override
+    public int hashCode() {
+        return this.hash;
     }
 }
