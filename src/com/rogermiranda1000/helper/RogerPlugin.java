@@ -3,6 +3,9 @@ package com.rogermiranda1000.helper;
 import com.rogermiranda1000.helper.blocks.CustomBlock;
 import com.rogermiranda1000.helper.metrics.Metrics;
 import com.rogermiranda1000.helper.reflection.SpigotEventOverrider;
+import com.rogermiranda1000.helper.worldguard.RegionDelimiter;
+import com.rogermiranda1000.helper.worldguard.WorldGuardManager;
+import com.rogermiranda1000.helper.worldguard.WorldGuardPre12;
 import com.rogermiranda1000.versioncontroller.Version;
 import com.rogermiranda1000.versioncontroller.VersionChecker;
 import com.rogermiranda1000.versioncontroller.VersionController;
@@ -17,25 +20,27 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.craftbukkit.libs.jline.internal.Nullable;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor, Reporter {
     public final String clearPrefix = ChatColor.GOLD.toString() + ChatColor.BOLD + "[" + this.getName() + "] " + ChatColor.GREEN,
             errorPrefix = ChatColor.GOLD.toString() + ChatColor.BOLD + "[" + this.getName() + "] " + ChatColor.RED;
 
-    private final Listener []listeners;
+    public String getClearPrefix() { return this.clearPrefix; }
+    public String getErrorPrefix() { return this.errorPrefix; }
+
+    private final HashMap<Class<? extends Listener>,Listener> listeners;
     private CustomCommand []commands;
     private final Metrics.CustomChart []charts;
     private final List<CustomBlock<?>> customBlocks;
     private String noPermissionsMessage, unknownMessage;
+    protected ChainedObject<RegionDelimiter> regionDelimiter;
 
     @Nullable
     private Metrics metrics;
@@ -63,7 +68,11 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
         this.isRunning = false;
         this.commands = commands;
         this.charts = charts;
-        this.listeners = listeners; // Listener... is the same than Listener[]
+
+        this.listeners = new HashMap<>();
+        for (Listener lis : listeners) this.listeners.put(lis.getClass(), lis);
+
+        this.regionDelimiter = new ChainedObject<>();
 
         this.noPermissionsMessage = "You don't have the permissions to do that.";
     }
@@ -290,11 +299,19 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
             });
 
             // get all the events
-            List<Listener> listeners = new ArrayList<>(Arrays.asList(this.listeners));
+            List<Listener> listeners = new ArrayList<>(this.listeners.values());
             for (CustomBlock<?> cb : this.customBlocks) listeners.addAll(cb.register());
 
             // register the events
             for (Listener lis : listeners) this.addListener(lis);
+
+            // instantiate WG manager
+            try {
+                Plugin worldguard = Bukkit.getPluginManager().getPlugin("WorldGuard");
+                if (worldguard != null) this.regionDelimiter.add((VersionController.version.compareTo(Version.MC_1_12) < 0) ? new WorldGuardPre12() : new WorldGuardManager());
+            } catch (Exception ex) {
+                this.reportException(ex); // rushed feature; there may be problems
+            }
 
             if (this.commands.length > 0 && VersionController.version.compareTo(Version.MC_1_10) >= 0) {
                 // if MC > 10 we can send hints onTab
@@ -385,6 +402,10 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
         }
     }
 
+    public <T extends Listener> T getListener(Class<T> cls) {
+        return cls.cast(this.listeners.get(cls)); // we save the class and its instance
+    }
+
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command cmd, @NotNull String label, @NotNull String[] args) {
         try {
@@ -394,7 +415,7 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
                         continue;
 
                     case NO_PERMISSIONS:
-                        sender.sendMessage(this.errorPrefix + this.noPermissionsMessage);
+                        sender.sendMessage(this.getErrorPrefix() + this.noPermissionsMessage);
                         break;
                     case MATCH:
                         command.notifier.onCommand(sender, args);
@@ -403,7 +424,7 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
                         sender.sendMessage("Don't use this command in console.");
                         break;
                     case INVALID_LENGTH:
-                        sender.sendMessage(this.errorPrefix +"Unknown command. Use " + ChatColor.GOLD + "/" + this.getName().toLowerCase() + " ?");
+                        sender.sendMessage(this.getErrorPrefix() +"Unknown command. Use " + ChatColor.GOLD + "/" + this.getName().toLowerCase() + " ?");
                         break;
                     default:
                         this.printConsoleErrorMessage("Unknown response to command");
@@ -412,7 +433,7 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
                 return true;
             }
 
-            sender.sendMessage(this.errorPrefix + this.unknownMessage);
+            sender.sendMessage(this.getErrorPrefix() + this.unknownMessage);
             this.commands[0].notifier.onCommand(sender, new String[]{}); // '?' command
             return true;
         } catch (Throwable ex) {

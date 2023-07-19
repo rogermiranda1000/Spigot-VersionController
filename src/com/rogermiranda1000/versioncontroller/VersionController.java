@@ -47,8 +47,8 @@ public class VersionController extends ItemManager implements BlockManager, Part
      * @return version (1.XX)
      */
     private static Version getVersion() {
-        // TODO get the full version
-        return new Version(1, Integer.parseInt(Bukkit.getBukkitVersion().split("-")[0].split("\\.")[1]), 0);
+        String[] numbers = Bukkit.getBukkitVersion().split("-")[0].split("\\.");
+        return new Version(Integer.parseInt(numbers[0]), Integer.parseInt(numbers[1]), (numbers.length < 3) ? 0 : Integer.parseInt(numbers[2]));
     }
 
     /**
