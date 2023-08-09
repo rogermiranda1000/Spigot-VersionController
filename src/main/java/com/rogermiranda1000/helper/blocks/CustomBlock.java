@@ -5,6 +5,7 @@ import com.github.davidmoten.rtreemulti.RTree;
 import com.github.davidmoten.rtreemulti.geometry.Point;
 import com.github.davidmoten.rtreemulti.geometry.Rectangle;
 import com.github.davidmoten.rtreemulti.geometry.internal.PointDouble;
+import com.github.davidmoten.rtreemulti.geometry.internal.RectangleDouble;
 import com.github.davidmoten.rtreemulti.internal.EntryDefault;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -38,12 +39,24 @@ import java.util.function.Function;
  * @param <T> The block information to save
  */
 public abstract class CustomBlock<T> implements Listener {
+    protected static final double EPSILON = 1e-6;
+
     protected static Point getPoint(Location loc) {
         if (loc.getWorld() == null) return Point.create(0,0,loc.getX(), loc.getY(), loc.getZ());
 
         return Point.create(Double.longBitsToDouble(loc.getWorld().getUID().getMostSignificantBits()),
                 Double.longBitsToDouble(loc.getWorld().getUID().getLeastSignificantBits()),
                 loc.getX(), loc.getY(), loc.getZ());
+    }
+
+    protected static Rectangle getPointWithMargin(Location loc) {
+        Point pos = CustomBlock.getPoint(loc);
+        double []vals = pos.values(),
+                mins = new double[vals.length],
+                maxs = new double[mins.length];
+        for (int n = 0; n < mins.length; n++) mins[n] = vals[n] - EPSILON;
+        for (int n = 0; n < maxs.length; n++) maxs[n] = vals[n] + EPSILON;
+        return RectangleDouble.create(mins, maxs);
     }
 
     /**
@@ -305,17 +318,24 @@ public abstract class CustomBlock<T> implements Listener {
      * @return      Custom block; null if none
      */
     @Nullable
-    synchronized public T getBlock(Location loc) {
-        Iterator<Entry<T, Point>> results = this.blocks.search(CustomBlock.getPoint(loc)).iterator();
+    public T getBlock(Location loc) {
+        Rectangle pos = CustomBlock.getPointWithMargin(loc);
+
+        Iterator<Entry<T, Point>> results;
+        synchronized (this) {
+            results = this.blocks.search(pos).iterator();
+        }
 
         if (!results.hasNext()) return null;
         return results.next().value();
     }
 
     protected void removeBlockArtificially(Location loc, @NotNull T rem) {
-        Point pos = CustomBlock.getPoint(loc);
+        Rectangle pos = CustomBlock.getPointWithMargin(loc);
+        final ArrayList<Entry<T,Point>> toRemove = new ArrayList<>();
         synchronized (this) {
-            this.blocks = this.blocks.delete(rem, pos);
+            this.blocks.search(pos).forEach(e -> toRemove.add(new EntryDefault<>(e.value(), e.geometry())));
+            for (Entry<T, Point> r : toRemove) this.blocks = this.blocks.delete(r);
         }
     }
 
