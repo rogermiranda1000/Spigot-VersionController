@@ -8,7 +8,7 @@ A helper for spigot plugins
 - [WorldGuard 6.2](https://dev.bukkit.org/projects/worldguard/files/956770)
 - [WorldEdit 7.0.0](https://dev.bukkit.org/projects/worldedit/files/2723275)
 - Maven's `org.jetbrains:annotations:LATEST`
-- Maven's `com.github.davidmoten:rtree-multi:LATEST` (extract with .jar)
+- Maven's `com.github.davidmoten:rtree-multi:LATEST`, and its dependency `com.github.davidmoten:guava-mini:LATEST` (extract both with .jar)
 - Maven's `io.sentry:sentry:LATEST` (extract with .jar)
 - Maven's `com.google.code.gson:gson:LATEST` (needed for Spigot <1.9; extract with .jar)
 
