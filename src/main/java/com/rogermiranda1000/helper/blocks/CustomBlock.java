@@ -39,9 +39,9 @@ import java.util.function.Function;
  * @param <T> The block information to save
  */
 public abstract class CustomBlock<T> implements Listener {
-    protected static final double EPSILON = 1e-6;
+    public static final double EPSILON = 1e-6;
 
-    protected static Point getPoint(Location loc) {
+    public static Point getPoint(Location loc) {
         if (loc.getWorld() == null) return Point.create(0,0,loc.getX(), loc.getY(), loc.getZ());
 
         return Point.create(Double.longBitsToDouble(loc.getWorld().getUID().getMostSignificantBits()),
@@ -49,7 +49,7 @@ public abstract class CustomBlock<T> implements Listener {
                 loc.getX(), loc.getY(), loc.getZ());
     }
 
-    protected static Rectangle getPointWithMargin(Location loc) {
+    public static Rectangle getPointWithMargin(Location loc) {
         Point pos = CustomBlock.getPoint(loc);
         double []vals = pos.values(),
                 mins = new double[vals.length],

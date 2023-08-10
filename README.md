@@ -11,6 +11,7 @@ A helper for spigot plugins
 - Maven's `org.jetbrains:annotations:LATEST`
 - Maven's `com.github.davidmoten:rtree-multi:LATEST`, and its dependency `com.github.davidmoten:guava-mini:LATEST` (extract both with .jar)
 - Maven's `io.sentry:sentry:LATEST` (extract with .jar)
+- Maven's `org.bstats:bstats-bukkit:LATEST` (extract with .jar shaded)
 
 ### Compile
 - Run Maven's `clean install`. Remember to use Java **8** (already managed by Maven).

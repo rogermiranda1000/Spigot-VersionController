@@ -1,7 +1,6 @@
 package com.rogermiranda1000.helper;
 
 import com.rogermiranda1000.helper.blocks.CustomBlock;
-import com.rogermiranda1000.helper.metrics.Metrics;
 import com.rogermiranda1000.helper.reflection.SpigotEventOverrider;
 import com.rogermiranda1000.helper.worldguard.RegionDelimiter;
 import com.rogermiranda1000.helper.worldguard.WorldGuardManager;
@@ -13,6 +12,8 @@ import io.sentry.*;
 import io.sentry.protocol.Message;
 import io.sentry.protocol.SentryId;
 import net.md_5.bungee.api.ChatColor;
+import org.bstats.bukkit.Metrics;
+import org.bstats.charts.CustomChart;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -37,7 +38,7 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
 
     private final HashMap<Class<? extends Listener>,Listener> listeners;
     private CustomCommand []commands;
-    private final Metrics.CustomChart []charts;
+    private final CustomChart []charts;
     private final List<CustomBlock<?>> customBlocks;
     private String noPermissionsMessage, unknownMessage;
     protected ChainedObject<RegionDelimiter> regionDelimiter;
@@ -54,7 +55,7 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
      * @param listeners     All the event listeners from the plugin
      */
     public RogerPlugin(CustomCommand []commands, Listener... listeners) {
-        this(commands, new Metrics.CustomChart[]{}, listeners);
+        this(commands, new CustomChart[]{}, listeners);
     }
 
     /**
@@ -63,7 +64,7 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
      * @param charts        All the reported data
      * @param listeners     All the event listeners from the plugin
      */
-    public RogerPlugin(CustomCommand []commands, Metrics.CustomChart []charts, final Listener... listeners) {
+    public RogerPlugin(CustomCommand []commands, CustomChart []charts, final Listener... listeners) {
         this.customBlocks = new ArrayList<>();
         this.isRunning = false;
         this.commands = commands;
@@ -282,7 +283,7 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
 
             if (this.getMetricsID() != null) {
                 this.metrics = new Metrics(this, this.getMetricsID());
-                for (Metrics.CustomChart chart : this.charts) this.metrics.addCustomChart(chart);
+                for (CustomChart chart : this.charts) this.metrics.addCustomChart(chart);
             }
 
             Bukkit.getScheduler().runTaskAsynchronously(this, () -> {
