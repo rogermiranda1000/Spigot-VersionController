@@ -232,14 +232,27 @@ public abstract class CustomBlock<T> implements Listener {
 
         if (world != null) {
             w1_min = w1_max = Double.longBitsToDouble(world.getUID().getMostSignificantBits());
+            w1_min -= EPSILON;
+            w1_max += EPSILON;
             w2_min = w2_max = Double.longBitsToDouble(world.getUID().getLeastSignificantBits());
+            w2_min -= EPSILON;
+            w2_max += EPSILON;
         }
-        if (x != null) x_min = x_max = x;
-        if (y != null) y_min = y_max = y;
-        if (z != null) z_min = z_max = z;
+        if (x != null) {
+            x_min = x - EPSILON;
+            x_max = x + EPSILON;
+        }
+        if (y != null) {
+            y_min = y - EPSILON;
+            y_max = y + EPSILON;
+        }
+        if (z != null) {
+            z_min = z - EPSILON;
+            z_max = z + EPSILON;
+        }
 
         this.blocks.search(Rectangle.create(w1_min, w2_min, x_min, y_min, z_min,
-                w1_max, w2_max, x_max, y_max, z_max)).forEach(e -> blockConsumer.accept(new CustomBlocksEntry<T>(e.value(), CustomBlock.getLocation(e.geometry()))));
+                w1_max, w2_max, x_max, y_max, z_max)).forEach(e -> blockConsumer.accept(new CustomBlocksEntry<>(e.value(), CustomBlock.getLocation(e.geometry()))));
     }
 
     synchronized public void placeBlockArtificially(T add, Location loc) {
