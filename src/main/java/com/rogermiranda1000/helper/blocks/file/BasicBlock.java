@@ -23,19 +23,25 @@ public class BasicBlock {
         this.object = object;
     }
 
-    /**
-     * @throws InvalidParameterException loader returned null
-     */
+    // TODO this returns null world
     public static <T> CustomBlocksEntry<T>[]getEntries(@NotNull BasicBlock []basicBlocks, @NotNull Function<String,T> loader) throws InvalidParameterException {
         @SuppressWarnings("unchecked")
         CustomBlocksEntry<T>[] r = new CustomBlocksEntry[basicBlocks.length];
         for (int i = 0; i < r.length; i++) {
             BasicBlock o = basicBlocks[i];
             T object = loader.apply(o.object);
-            if (object == null) /*throw new InvalidParameterException("Loader returns null while processing " + o.toString())*/ r[i] = null;
-            else r[i] = new CustomBlocksEntry<>(object, new Location(Bukkit.getWorld(o.world), (double)o.x, (double)o.y, (double)o.z));
+            if (object == null) {
+                /*throw new InvalidParameterException("Loader returns null while processing " + o.toString())*/
+                Bukkit.getLogger().warning("Got null block while trying to load " + o.getBlockLocation().toString());
+                r[i] = null;
+            }
+            else r[i] = new CustomBlocksEntry<>(object, o.getBlockLocation());
         }
         return r;
+    }
+
+    public Location getBlockLocation() {
+        return new Location(Bukkit.getWorld(this.world), this.x, this.y, this.z);
     }
 
     @Override

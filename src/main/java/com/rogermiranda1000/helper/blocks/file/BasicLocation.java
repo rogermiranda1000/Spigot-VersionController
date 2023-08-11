@@ -19,4 +19,14 @@ public class BasicLocation {
     public Location getLocation() {
         return new Location(Bukkit.getWorld(this.world), this.x, this.y, this.z);
     }
+
+    @Override
+    public String toString() {
+        return "BasicLocation{" +
+                "world='" + world + '\'' +
+                ", x=" + x +
+                ", y=" + y +
+                ", z=" + z +
+                '}';
+    }
 }
