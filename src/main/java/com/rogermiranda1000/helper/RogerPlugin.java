@@ -8,6 +8,7 @@ import com.rogermiranda1000.helper.worldguard.WorldGuardPre12;
 import com.rogermiranda1000.versioncontroller.Version;
 import com.rogermiranda1000.versioncontroller.VersionChecker;
 import com.rogermiranda1000.versioncontroller.VersionController;
+import com.rogermiranda1000.versioncontroller.entities.EntityWrapper;
 import io.sentry.*;
 import io.sentry.protocol.Message;
 import io.sentry.protocol.SentryId;
@@ -328,6 +329,9 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
                     this.printConsoleErrorMessage("Invalid file format. The block '" + cb.getId() + "' can't be loaded.");
                 }
             }
+
+            // enable the gravity task (if needed)
+            EntityWrapper.registerListeners(this);
 
             this.postOnEnable();
 
