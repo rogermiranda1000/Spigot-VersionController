@@ -6,6 +6,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.bukkit.util.Vector;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -49,6 +50,7 @@ public class EntityGravityManagerPre10 implements EntityGravityManager {
 
             for (Map.Entry<Entity, Location> e : entities) {
                 e.getKey().teleport(e.getValue());
+                e.getKey().setVelocity(new Vector(0,0,0));
             }
         };
 
