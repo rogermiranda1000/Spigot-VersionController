@@ -1,4 +1,4 @@
-package com.rogermiranda1000.versioncontroller.entities;
+package com.rogermiranda1000.versioncontroller.entities.bounds;
 
 import org.bukkit.util.Vector;
 

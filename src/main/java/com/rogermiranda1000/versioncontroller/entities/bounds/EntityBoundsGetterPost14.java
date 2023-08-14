@@ -1,8 +1,8 @@
-package com.rogermiranda1000.versioncontroller.entities;
+package com.rogermiranda1000.versioncontroller.entities.bounds;
 
 import org.bukkit.entity.Entity;
 
-public class EntitySpigotPost14 implements EntityManager {
+public class EntityBoundsGetterPost14 implements EntityBoundsGetter {
     @Override
     public BoundingBox getBoundingBox(Entity e) {
         org.bukkit.util.BoundingBox boundingBox = e.getBoundingBox();

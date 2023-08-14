@@ -1,4 +1,4 @@
-package com.rogermiranda1000.versioncontroller.entities;
+package com.rogermiranda1000.versioncontroller.entities.bounds;
 
 import com.rogermiranda1000.versioncontroller.VersionController;
 import org.bukkit.entity.Entity;
@@ -7,15 +7,15 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
-public class EntitySpigotPre14 implements EntityManager {
+public class EntityBoundsGetterPre14 implements EntityBoundsGetter {
     @Nullable
-    private static final Class<?> craftEntityClass = EntitySpigotPre14.getCraftEntityClass(),
-                                entityClass = EntitySpigotPre14.getEntityClass(),
-                                boundingBoxClass = EntitySpigotPre14.getBoundingBoxClass();
+    private static final Class<?> craftEntityClass = EntityBoundsGetterPre14.getCraftEntityClass(),
+                                entityClass = EntityBoundsGetterPre14.getEntityClass(),
+                                boundingBoxClass = EntityBoundsGetterPre14.getBoundingBoxClass();
 
     @Nullable
-    private static final Method getEntityMethod = EntitySpigotPre14.getEntityMethod(),
-            getBoundingBoxMethod = EntitySpigotPre14.getBoundingBoxMethod();
+    private static final Method getEntityMethod = EntityBoundsGetterPre14.getEntityMethod(),
+            getBoundingBoxMethod = EntityBoundsGetterPre14.getBoundingBoxMethod();
 
     @Nullable
     private static final Field minXField = getBoundingBoxField("minX"), minYField = getBoundingBoxField("minY"), minZField = getBoundingBoxField("minZ"),
@@ -71,14 +71,14 @@ public class EntitySpigotPre14 implements EntityManager {
      */
     private static Field getBoundingBoxField(String name) {
         try {
-            return EntitySpigotPre14.boundingBoxClass.getDeclaredField(name);
+            return EntityBoundsGetterPre14.boundingBoxClass.getDeclaredField(name);
         } catch (NoSuchFieldException ignored) {
             try {
                 // maybe it's a/b/c/d/e/f
                 int var = (int)'a';
                 if (name.startsWith("max")) var += 3;
                 var += (int)name.charAt(3) - 'X';
-                return EntitySpigotPre14.boundingBoxClass.getDeclaredField(Character.toString((char)var));
+                return EntityBoundsGetterPre14.boundingBoxClass.getDeclaredField(Character.toString((char)var));
             } catch (NoSuchFieldException e) {
                 e.printStackTrace();
                 return null;
@@ -89,8 +89,8 @@ public class EntitySpigotPre14 implements EntityManager {
     @Override
     public BoundingBox getBoundingBox(Entity e) {
         try {
-            Object craftEntity = EntitySpigotPre14.craftEntityClass.cast(e);
-            Object boundingBox = EntitySpigotPre14.getBoundingBoxMethod.invoke(EntitySpigotPre14.getEntityMethod.invoke(craftEntity));
+            Object craftEntity = EntityBoundsGetterPre14.craftEntityClass.cast(e);
+            Object boundingBox = EntityBoundsGetterPre14.getBoundingBoxMethod.invoke(EntityBoundsGetterPre14.getEntityMethod.invoke(craftEntity));
             return new BoundingBox((double)minXField.get(boundingBox), (double)minYField.get(boundingBox), (double)minZField.get(boundingBox),
                     (double)maxXField.get(boundingBox), (double)maxYField.get(boundingBox), (double)maxZField.get(boundingBox));
         } catch (Exception ex) {
