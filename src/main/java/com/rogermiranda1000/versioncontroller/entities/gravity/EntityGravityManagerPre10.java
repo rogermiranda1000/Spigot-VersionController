@@ -32,6 +32,13 @@ public class EntityGravityManagerPre10 implements EntityGravityManager {
     }
 
     @Override
+    public void enableGravity(Entity e) {
+        synchronized (EntityGravityManagerPre10.targetLocatons) {
+            EntityGravityManagerPre10.targetLocatons.remove(e);
+        }
+    }
+
+    @Override
     public void registerListeners(RogerPlugin plugin) {
         Runnable updateGravitylessEntities = () -> {
             Set<Map.Entry<Entity, Location>> entities;

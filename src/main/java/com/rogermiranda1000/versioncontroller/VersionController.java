@@ -4,7 +4,6 @@ import com.rogermiranda1000.versioncontroller.blocks.BlockManager;
 import com.rogermiranda1000.versioncontroller.blocks.BlockPost13;
 import com.rogermiranda1000.versioncontroller.blocks.BlockPre13;
 import com.rogermiranda1000.versioncontroller.blocks.BlockType;
-import com.rogermiranda1000.versioncontroller.entities.*;
 import com.rogermiranda1000.versioncontroller.items.ItemManager;
 import com.rogermiranda1000.versioncontroller.items.ItemPost9;
 import com.rogermiranda1000.versioncontroller.items.ItemPre9;
@@ -15,14 +14,10 @@ import com.rogermiranda1000.versioncontroller.particles.ParticlePre9;
 import org.bukkit.Bukkit;
 import org.bukkit.block.Block;
 import org.bukkit.craftbukkit.libs.jline.internal.Nullable;
-import org.bukkit.entity.Entity;
-import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
-import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.FileNotFoundException;
 import java.util.Properties;
 
 /**

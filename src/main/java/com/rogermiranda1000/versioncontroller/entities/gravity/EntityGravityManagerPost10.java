@@ -7,4 +7,9 @@ public class EntityGravityManagerPost10 implements EntityGravityManager {
     public void disableGravity(Entity e) {
         e.setGravity(false);
     }
+
+    @Override
+    public void enableGravity(Entity e) {
+        e.setGravity(true);
+    }
 }

@@ -11,5 +11,7 @@ public interface EntityGravityManager {
 
     public void disableGravity(Entity e);
 
+    public void enableGravity(Entity e);
+
     public default void registerListeners(RogerPlugin plugin) {}
 }

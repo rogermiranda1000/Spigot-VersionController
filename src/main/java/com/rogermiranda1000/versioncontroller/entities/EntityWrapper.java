@@ -18,7 +18,6 @@ import org.bukkit.entity.Entity;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class EntityWrapper {
     private static final EntityBoundsGetter boundsGetter = (VersionController.version.compareTo(Version.MC_1_14) < 0) ? new EntityBoundsGetterPre14() : new EntityBoundsGetterPost14();
@@ -51,6 +50,10 @@ public class EntityWrapper {
 
     public void disableGravity() {
         EntityWrapper.gravityManager.disableGravity(this.entity);
+    }
+
+    public void enableGravity() {
+        EntityWrapper.gravityManager.enableGravity(this.entity);
     }
 
     public BoundingBox getBoundingBox() {
