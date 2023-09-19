@@ -10,24 +10,6 @@ import java.util.List;
 import java.util.Map;
 
 public abstract class ItemManager {
-    /**
-     * Implement method to get the item(s) in hand
-     * @param playerInventory Inventory
-     * @return Item(s) holded
-     */
-    public abstract ItemStack[] getItemInHand(PlayerInventory playerInventory);
-
-    /**
-     * Get player's inventory and call getItemInHand(PlayerInventory)
-     * @param player Player
-     * @return Item(s) holded
-     */
-    public ItemStack[] getItemInHand(Player player) {
-        return this.getItemInHand(player.getInventory());
-    }
-
-    public abstract void setItemInHand(PlayerInventory playerInventory, ItemStack item);
-
     public abstract boolean isItem(ItemStack item);
 
     public abstract int getDurability(ItemStack item) throws IllegalArgumentException;
@@ -75,19 +57,5 @@ public abstract class ItemManager {
 
         // same name?
         return m.getDisplayName().equals(m2.getDisplayName());
-    }
-
-    /**
-     * Check if player is holding an item
-     * @param p Player
-     * @param i Item
-     * @return If the player is holding that item (true), or not (false)
-     */
-    public boolean hasItemInHand(Player p, ItemStack i) {
-        for (ItemStack item : this.getItemInHand(p)) {
-            if (this.sameItem(i, item)) return true;
-        }
-
-        return false;
     }
 }

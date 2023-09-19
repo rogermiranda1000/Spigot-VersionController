@@ -105,16 +105,6 @@ public class VersionController extends ItemManager implements BlockManager, Part
     }
 
     @Override
-    public ItemStack[] getItemInHand(PlayerInventory playerInventory) {
-        return VersionController.itemManager.getItemInHand(playerInventory);
-    }
-
-    @Override
-    public void setItemInHand(PlayerInventory playerInventory, ItemStack item) {
-        VersionController.itemManager.setItemInHand(playerInventory, item);
-    }
-
-    @Override
     public boolean isItem(ItemStack item) {
         return VersionController.itemManager.isItem(item);
     }

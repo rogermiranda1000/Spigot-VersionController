@@ -12,19 +12,6 @@ import org.bukkit.inventory.meta.ItemMeta;
  */
 public class ItemPost9 extends ItemManager {
     @Override
-    public ItemStack[] getItemInHand(PlayerInventory playerInventory) {
-        ItemStack[] r = new ItemStack[2];
-        r[0] = playerInventory.getItemInMainHand();
-        r[1] = playerInventory.getItemInOffHand();
-        return r;
-    }
-
-    @Override
-    public void setItemInHand(PlayerInventory playerInventory, ItemStack item) {
-        playerInventory.setItemInMainHand(item);
-    }
-
-    @Override
     public boolean isItem(ItemStack item) {
         return item.getType().isItem(); // TODO will work in <1.13?
     }
