@@ -58,6 +58,14 @@
       <scope>compile</scope>
     </dependency>
 
+    <!-- ConfigLib dependency -->
+    <dependency>
+      <groupId>org.snakeyaml</groupId>
+      <artifactId>snakeyaml-engine</artifactId>
+      <version>LATEST</version>
+      <scope>compile</scope>
+    </dependency>
+
     <!-- FILE DEPENDENCIES -->
 
     <dependency>
@@ -134,7 +142,7 @@
         </configuration>
       </plugin>
 
-      <!-- attach rtree and sentry -->
+      <!-- attach rtree and sentry and shaded files -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>
@@ -173,7 +181,6 @@
             </configuration>
           </execution>
 
-
           <execution>
             <id>unpack-sentry</id>
             <phase>generate-sources</phase>
@@ -190,15 +197,34 @@
               </artifactItems>
             </configuration>
           </execution>
+
+          <execution>
+            <id>unpack-configlib-deps</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>unpack</goal>
+            </goals>
+            <configuration>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>org.snakeyaml</groupId>
+                  <artifactId>snakeyaml-engine</artifactId>
+                  <outputDirectory>${project.build.directory}/classes</outputDirectory>
+                </artifactItem>
+              </artifactItems>
+            </configuration>
+          </execution>
         </executions>
       </plugin>
 
+      <!-- shade bstats and configlib -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
-        <version>3.1.0</version>
+        <version>3.2.0</version>
         <configuration>
           <relocations>
+            <!-- bStats -->
             <relocation>
               <pattern>org.bstats</pattern>
               <shadedPattern>com.rogermiranda1000.helper.metrics</shadedPattern>
@@ -211,6 +237,15 @@
             <goals>
               <goal>shade</goal>
             </goals>
+            <configuration>
+              <artifactSet>
+                <includes>
+                  <!-- bStats -->
+                  <include>org.bstats:bstats-base</include>
+                  <include>org.bstats:bstats-bukkit</include>
+                </includes>
+              </artifactSet>
+            </configuration>
           </execution>
         </executions>
       </plugin>
