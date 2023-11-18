@@ -55,16 +55,15 @@ public abstract class CachedCustomBlock<T,O> extends CustomBlock<T> {
     /**
      * Useful while using preserveObjects
      */
-    synchronized public void addObject(T obj) {
-        O toAdd = this.cacheByKey.apply(obj);
+    synchronized public void addObject(O toAdd) {
         if (!this.cache.containsKey(toAdd)) this.cache.put(toAdd, new ArrayList<>());
     }
 
     /**
      * Useful while using preserveObjects
      */
-    synchronized public void removeObject(T obj) {
-        this.cache.remove(this.cacheByKey.apply(obj));
+    synchronized public void removeObject(O toRemove) {
+        this.cache.remove(toRemove);
     }
 
     /**
