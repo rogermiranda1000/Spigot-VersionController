@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.util.*;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -62,7 +63,7 @@ public abstract class CustomBlock<T> implements Listener {
     /**
      * Converts a point returned by getPoint into the original location
      */
-    protected static Location getLocation(Point p) throws IllegalArgumentException {
+    public static Location getLocation(Point p) throws IllegalArgumentException {
         if (!(p instanceof PointDouble)) throw new IllegalArgumentException("Point must be instance of PointDouble!");
         double []values = ((PointDouble)p).mins();
         if (values.length != 5) throw new IllegalArgumentException("Point must have 5 elements!");
@@ -100,12 +101,12 @@ public abstract class CustomBlock<T> implements Listener {
         this(plugin, id, isTheSameCustomBlock, overrideProtections, onEventSuceedRemove, new StoreConversion<T>(){
             private final Gson gson = new Gson();
 
-            public Function<T,String> storeName() {
-                return in->this.gson.toJson((O) storeFunctions.storeName().apply((T) in));
+            public BiFunction<T,Location,String> storeName() {
+                return (in,loc)->this.gson.toJson(storeFunctions.storeName().apply(in,loc));
             }
 
-            public Function<String,T> loadName() {
-                return in->storeFunctions.loadName().apply(this.gson.fromJson(in, storeFunctions.getOutputClass()));
+            public BiFunction<String,Location,T> loadName() {
+                return (in,loc)->storeFunctions.loadName().apply(this.gson.fromJson(in, storeFunctions.getOutputClass()),loc);
             }
         });
     }
@@ -185,7 +186,7 @@ public abstract class CustomBlock<T> implements Listener {
 
         // get the output
         final ArrayList<BasicBlock> basicBlocks = new ArrayList<>();
-        this.getAllBlocks(e -> basicBlocks.add(new BasicBlock(e.getValue(), storeFunctions.storeName().apply(e.getKey()))));
+        this.getAllBlocks(e -> basicBlocks.add(new BasicBlock(e.getValue(), storeFunctions.storeName().apply(e.getKey(),e.getValue()))));
 
         if (basicBlocks.size() > 0) {
             // write
@@ -348,7 +349,7 @@ public abstract class CustomBlock<T> implements Listener {
         final ArrayList<Entry<T,Point>> toRemove = new ArrayList<>();
         synchronized (this) {
             this.blocks.search(pos).forEach(e -> toRemove.add(new EntryDefault<>(e.value(), e.geometry())));
-            for (Entry<T, Point> r : toRemove) this.blocks = this.blocks.delete(r);
+            this.blocks = this.blocks.delete(toRemove);
         }
     }
 

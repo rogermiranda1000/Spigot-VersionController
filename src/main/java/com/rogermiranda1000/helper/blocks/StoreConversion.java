@@ -1,8 +1,11 @@
 package com.rogermiranda1000.helper.blocks;
 
+import org.bukkit.Location;
+
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 public interface StoreConversion<T> {
-    public Function<T,String> storeName();
-    public Function<String,T> loadName();
+    public BiFunction<T,Location,String> storeName();
+    public BiFunction<String,Location,T> loadName();
 }

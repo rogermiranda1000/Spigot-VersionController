@@ -1,5 +1,8 @@
 package com.rogermiranda1000.helper.blocks;
 
+import org.bukkit.Location;
+
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 public class Ignored {
@@ -7,13 +10,13 @@ public class Ignored {
         public StoreIgnored() {}
 
         @Override
-        public Function<Ignored, String> storeName() {
-            return (in)->"";
+        public BiFunction<Ignored, Location, String> storeName() {
+            return (in,loc)->"";
         }
 
         @Override
-        public Function<String, Ignored> loadName() {
-            return (in)->Ignored.get();
+        public BiFunction<String, Location, Ignored> loadName() {
+            return (in,loc)->Ignored.get();
         }
     }
 

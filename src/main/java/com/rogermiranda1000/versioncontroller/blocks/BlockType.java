@@ -39,4 +39,9 @@ public abstract class BlockType {
         if (this == o) return true;
         return this.getName().equals(((BlockType)o).getName());
     }
+
+    @Override
+    public int hashCode() {
+        return this.getName().hashCode();
+    }
 }
