@@ -233,7 +233,7 @@ final class SerializerSelector {
             return TypeSerializer.newSerializerFor(cls, properties);
 
         String msg = "Missing serializer for type " + cls + ".\n" +
-                     "Either annotate the type with @Configuration, make it a Java record, " +
+                     "Either annotate the type with @Configuration, " +
                      "or provide a custom serializer for it.";
         throw new ConfigurationException(msg);
     }

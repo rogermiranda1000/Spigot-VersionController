@@ -6,6 +6,7 @@ import org.bukkit.Location;
 import org.jetbrains.annotations.NotNull;
 
 import java.security.InvalidParameterException;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 public class BasicBlock {
@@ -24,12 +25,12 @@ public class BasicBlock {
     }
 
     // TODO this returns null world
-    public static <T> CustomBlocksEntry<T>[]getEntries(@NotNull BasicBlock []basicBlocks, @NotNull Function<String,T> loader) throws InvalidParameterException {
+    public static <T> CustomBlocksEntry<T>[]getEntries(@NotNull BasicBlock []basicBlocks, @NotNull BiFunction<String,Location,T> loader) throws InvalidParameterException {
         @SuppressWarnings("unchecked")
         CustomBlocksEntry<T>[] r = new CustomBlocksEntry[basicBlocks.length];
         for (int i = 0; i < r.length; i++) {
             BasicBlock o = basicBlocks[i];
-            T object = loader.apply(o.object);
+            T object = loader.apply(o.object,o.getBlockLocation());
             if (object == null) {
                 /*throw new InvalidParameterException("Loader returns null while processing " + o.toString())*/
                 Bukkit.getLogger().warning("Got null block while trying to load " + o.getBlockLocation().toString());

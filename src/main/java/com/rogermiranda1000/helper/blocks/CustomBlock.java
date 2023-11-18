@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.util.*;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -100,12 +101,12 @@ public abstract class CustomBlock<T> implements Listener {
         this(plugin, id, isTheSameCustomBlock, overrideProtections, onEventSuceedRemove, new StoreConversion<T>(){
             private final Gson gson = new Gson();
 
-            public Function<T,String> storeName() {
-                return in->this.gson.toJson((O) storeFunctions.storeName().apply((T) in));
+            public BiFunction<T,Location,String> storeName() {
+                return (in,loc)->this.gson.toJson(storeFunctions.storeName().apply(in,loc));
             }
 
-            public Function<String,T> loadName() {
-                return in->storeFunctions.loadName().apply(this.gson.fromJson(in, storeFunctions.getOutputClass()));
+            public BiFunction<String,Location,T> loadName() {
+                return (in,loc)->storeFunctions.loadName().apply(this.gson.fromJson(in, storeFunctions.getOutputClass()),loc);
             }
         });
     }
@@ -185,7 +186,7 @@ public abstract class CustomBlock<T> implements Listener {
 
         // get the output
         final ArrayList<BasicBlock> basicBlocks = new ArrayList<>();
-        this.getAllBlocks(e -> basicBlocks.add(new BasicBlock(e.getValue(), storeFunctions.storeName().apply(e.getKey()))));
+        this.getAllBlocks(e -> basicBlocks.add(new BasicBlock(e.getValue(), storeFunctions.storeName().apply(e.getKey(),e.getValue()))));
 
         if (basicBlocks.size() > 0) {
             // write
