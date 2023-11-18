@@ -18,7 +18,7 @@ import java.util.function.Function;
  *              Note: T must have implemented a valid 'equals' and 'hash' functions
  */
 public abstract class CachedCustomBlock<T,O> extends CustomBlock<T> {
-    private HashMap<O, List<Location>> cache;
+    private HashMap<O, List<CustomBlocksEntry<T>>> cache;
     private final boolean preserveObjects;
     private final Function<T,O> cacheByKey;
 
@@ -74,9 +74,15 @@ public abstract class CachedCustomBlock<T,O> extends CustomBlock<T> {
      */
     @Override
     public void getAllBlocksByValue(@NotNull final T val, final Consumer<CustomBlocksEntry<T>> blockConsumer) {
-        List<Location> locations = this.getAllBlocksByValue(val);
+        List<CustomBlocksEntry<T>> locations = this.getAllBlocksByValue(this.cacheByKey.apply(val));
         if (locations == null) return; // however, it shouldn't happen
-        locations.forEach(l -> blockConsumer.accept(new CustomBlocksEntry<>(val, l)));
+        locations.forEach(blockConsumer);
+    }
+
+    public void getAllCBlocksByValue(@NotNull final O val, final Consumer<CustomBlocksEntry<T>> blockConsumer) {
+        List<CustomBlocksEntry<T>> locations = this.getAllBlocksByValue(val);
+        if (locations == null) return; // however, it shouldn't happen
+        locations.forEach(blockConsumer);
     }
 
     /**
@@ -85,8 +91,8 @@ public abstract class CachedCustomBlock<T,O> extends CustomBlock<T> {
      * @return              Values found
      */
     @Nullable
-    synchronized public List<Location> getAllBlocksByValue(@NotNull final T val) {
-        return this.cache.get(this.cacheByKey.apply(val));
+    synchronized public List<CustomBlocksEntry<T>> getAllBlocksByValue(@NotNull final O val) {
+        return this.cache.get(val);
     }
 
     @Override
@@ -94,23 +100,23 @@ public abstract class CachedCustomBlock<T,O> extends CustomBlock<T> {
         super.placeBlockArtificially(add, loc);
         synchronized (this) {
             O toAdd = this.cacheByKey.apply(add);
-            List<Location> s = this.cache.get(toAdd);
+            List<CustomBlocksEntry<T>> s = this.cache.get(toAdd);
             if (s == null) {
                 s = new ArrayList<>();
                 this.cache.put(toAdd, s);
             }
 
-            s.add(loc);
+            s.add(new CustomBlocksEntry<>(add,loc));
         }
     }
 
     @Override
-    protected void removeBlockArtificially(Location loc, @NotNull T rem) {
+    protected void removeBlockArtificially(final Location loc, @NotNull T rem) {
         super.removeBlockArtificially(loc, rem);
         synchronized (this) {
             O toRemove = this.cacheByKey.apply(rem);
-            List<Location> s = this.cache.get(toRemove);
-            s.remove(loc);
+            List<CustomBlocksEntry<T>> s = this.cache.get(toRemove);
+            s.removeIf(e -> e.getValue().equals(loc));
             if (!this.preserveObjects && s.isEmpty()) this.cache.remove(toRemove); // the last element was removed
         }
     }
@@ -118,11 +124,12 @@ public abstract class CachedCustomBlock<T,O> extends CustomBlock<T> {
     @Override
     synchronized public void removeBlocksArtificiallyByValue(@NotNull final T val, @Nullable final Consumer<CustomBlocksEntry<T>> blockConsumer) {
         O toRemove = this.cacheByKey.apply(val);
-        List<Location> s = this.cache.get(toRemove);
+        List<CustomBlocksEntry<T>> s = this.cache.get(toRemove);
         if (s == null) return;
-        for (Location loc : s) {
+        for (CustomBlocksEntry<T> e : s) {
+            Location loc = e.getValue();
             this.blocks = this.blocks.delete(val, CustomBlock.getPoint(loc));
-            if (blockConsumer != null) blockConsumer.accept(new CustomBlocksEntry<>(val, loc));
+            if (blockConsumer != null) blockConsumer.accept(e);
         }
         if (!this.preserveObjects) this.cache.remove(toRemove);
     }
