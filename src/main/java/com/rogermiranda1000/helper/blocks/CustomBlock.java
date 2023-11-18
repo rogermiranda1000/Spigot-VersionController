@@ -63,7 +63,7 @@ public abstract class CustomBlock<T> implements Listener {
     /**
      * Converts a point returned by getPoint into the original location
      */
-    protected static Location getLocation(Point p) throws IllegalArgumentException {
+    public static Location getLocation(Point p) throws IllegalArgumentException {
         if (!(p instanceof PointDouble)) throw new IllegalArgumentException("Point must be instance of PointDouble!");
         double []values = ((PointDouble)p).mins();
         if (values.length != 5) throw new IllegalArgumentException("Point must have 5 elements!");
@@ -349,7 +349,7 @@ public abstract class CustomBlock<T> implements Listener {
         final ArrayList<Entry<T,Point>> toRemove = new ArrayList<>();
         synchronized (this) {
             this.blocks.search(pos).forEach(e -> toRemove.add(new EntryDefault<>(e.value(), e.geometry())));
-            for (Entry<T, Point> r : toRemove) this.blocks = this.blocks.delete(r);
+            this.blocks = this.blocks.delete(toRemove);
         }
     }
 
