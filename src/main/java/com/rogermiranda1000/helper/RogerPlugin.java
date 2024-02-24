@@ -278,6 +278,8 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
             this.reports = 0;
             if (this.getSentryDsn() != null) this.hub = this.initSentry();
 
+            this.preCustomBlocks();
+
             this.clearCustomBlocks();
 
             this.preOnEnable();
@@ -396,6 +398,7 @@ public abstract class RogerPlugin extends JavaPlugin implements CommandExecutor,
         }
     }
 
+    public void preCustomBlocks() {}
     public void preOnEnable() {}
     public void postOnEnable() {}
     public void preOnDisable() {}

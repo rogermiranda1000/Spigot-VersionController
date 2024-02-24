@@ -17,8 +17,8 @@ import java.util.function.BinaryOperator;
  * IMPORTANT: this class may not work as intended in plugins that overrides protections
  */
 public class WorldGuardManager implements RegionDelimiter {
-    private HashMap<String,Boolean> defaultValues = new HashMap<>();
-    private HashMap<String, Flag<StateFlag.State>> flags = new HashMap<>();
+    /*private HashMap<String,Boolean> defaultValues = new HashMap<>();
+    private HashMap<String, Flag<StateFlag.State>> flags = new HashMap<>();*/
 
     @Override
     public boolean isInsideRegion(Location target, Collection<String> regionNames) {

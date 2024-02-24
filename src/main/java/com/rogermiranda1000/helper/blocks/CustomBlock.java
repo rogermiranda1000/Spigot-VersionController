@@ -137,7 +137,7 @@ public abstract class CustomBlock<T> implements Listener {
 
     public void unregister() {
         HandlerList.unregisterAll(this);
-        if (overrideProtections) ProtectionOverrider.deinstantiate(this);
+        if (this.overrideProtections) ProtectionOverrider.deinstantiate(this);
     }
 
     public boolean willSave() {
